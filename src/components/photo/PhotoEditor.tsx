@@ -31,7 +31,7 @@ import {
   Wand2,
   X,
   Brush,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import type { FileEntry, PathRef } from "@/lib/files/types";

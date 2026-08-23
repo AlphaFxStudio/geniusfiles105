@@ -25,7 +25,7 @@ import {
   Shield,
   Sun,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";

@@ -23,7 +23,7 @@ import {
   Share2,
   SlidersHorizontal,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons";
 
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import { useOverlayZClass } from "@/lib/files/overlay-z";

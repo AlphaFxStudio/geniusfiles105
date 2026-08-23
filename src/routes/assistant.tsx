@@ -19,7 +19,7 @@ import {
   WifiOff,
   Copy,
   Check,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { useT, t as translate } from "@/lib/i18n";
 import { QuotaBadge } from "@/components/quota/QuotaBadge";

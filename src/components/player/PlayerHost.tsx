@@ -1,4 +1,4 @@
-import { Pause, Play, SkipForward, X } from "lucide-react";
+import { Pause, Play, SkipForward, X } from "@/components/icons";
 import { audioStore, useAudioState } from "@/lib/player/audio-store";
 import { AudioPlayer } from "./AudioPlayer";
 import { ArtworkFallback } from "./ArtworkFallback";

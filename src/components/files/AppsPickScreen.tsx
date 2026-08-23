@@ -7,7 +7,7 @@
  * transmet donc un chemin d'APK réel à la fonctionnalité appelante
  * (transfert, partage, sauvegarde…), jamais une simple description.
  */
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/common/PageHeader";

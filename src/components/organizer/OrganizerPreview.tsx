@@ -5,7 +5,7 @@
  * - ce qui est ajouté, retiré, renommé ;
  * - un état visuel « avant → après » avec badges de diff.
  */
-import { ArrowRight, FolderPlus, MinusCircle, PlusCircle, PencilLine } from "lucide-react";
+import { ArrowRight, FolderPlus, MinusCircle, PlusCircle, PencilLine } from "@/components/icons";
 import { useT } from "@/lib/i18n";
 import type { OrgPreview } from "@/lib/organizer";
 

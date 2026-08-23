@@ -5,8 +5,8 @@
  * vide, l'absence de résultat, l'erreur et la progression d'une tâche,
  * afin qu'aucune page ne paraisse moins soignée qu'une autre.
  */
-import type { LucideIcon } from "lucide-react";
-import { AlertTriangle, Loader2, RotateCcw, SearchX } from "lucide-react";
+import type { LucideIcon } from "@/components/icons";
+import { AlertTriangle, Loader2, RotateCcw, SearchX } from "@/components/icons";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useT } from "@/lib/i18n";

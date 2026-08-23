@@ -1,4 +1,4 @@
-import { ArrowLeft, FolderPlus, LayoutGrid, List, MoreVertical, Search } from "lucide-react";
+import { ArrowLeft, FolderPlus, LayoutGrid, List, MoreVertical, Search } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 
 import type { SortKey, SortOrder, ViewMode } from "@/lib/files/types";

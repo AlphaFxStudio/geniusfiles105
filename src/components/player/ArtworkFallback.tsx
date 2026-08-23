@@ -1,4 +1,4 @@
-import { Music2 } from "lucide-react";
+import { Music2 } from "@/components/icons";
 
 /**
  * Deterministic gradient tile shown when a track has no embedded artwork.

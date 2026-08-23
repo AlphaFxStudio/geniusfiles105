@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronRight, Circle, Eye, MoreVertical } from "lucide-react";
+import { CheckCircle2, ChevronRight, Circle, Eye, MoreVertical } from "@/components/icons";
 import { memo, useRef } from "react";
 import { countLabel } from "@/lib/copy";
 import { useT } from "@/lib/i18n";

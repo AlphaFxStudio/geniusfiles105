@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, PlayCircle, X } from "lucide-react";
+import { AlertTriangle, PlayCircle, X } from "@/components/icons";
 import { dismissJob, listResumableJobs, subscribeJobs, type JobRecord } from "@/lib/jobs/journal";
 import { resumeJob } from "@/lib/jobs/resume";
 import { formatCount } from "@/lib/copy";

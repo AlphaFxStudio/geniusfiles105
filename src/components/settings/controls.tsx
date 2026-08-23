@@ -6,7 +6,7 @@
  * groupes secondaires peuvent être repliables (`collapsible`).
  */
 import { useState, type ComponentType, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons";
 
 export function SettingsGroup({
   title,

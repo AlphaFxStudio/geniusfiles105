@@ -1,4 +1,4 @@
-import { CheckSquare, ChevronRight, FolderPlus, HardDrive } from "lucide-react";
+import { CheckSquare, ChevronRight, FolderPlus, HardDrive } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { PathRef } from "@/lib/files/types";

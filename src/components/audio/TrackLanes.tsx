@@ -18,7 +18,7 @@ import {
   Crown,
   RefreshCw,
   Loader2,
-} from "lucide-react";
+} from "@/components/icons";
 
 import type { AudioClip, TimeRange } from "@/lib/audio/types";
 import { computePeaksSync } from "@/lib/audio/peaks";

@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Clock3 } from "lucide-react";
+import { ArrowRight, Clock3 } from "@/components/icons";
 import { FileIcon } from "@/components/files/FileIcon";
 import { UniversalViewer } from "@/components/viewer/UniversalViewer";
 import { canPreview } from "@/lib/viewer/kinds";

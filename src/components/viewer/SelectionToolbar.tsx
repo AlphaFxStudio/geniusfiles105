@@ -8,7 +8,7 @@
  * aux actions générales du lecteur.
  */
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { Copy, Share2, TextSelect, X } from "lucide-react";
+import { Copy, Share2, TextSelect, X } from "@/components/icons";
 import { copyText, selectAllIn, shareText } from "@/lib/viewer/selection";
 import { useT } from "@/lib/i18n";
 

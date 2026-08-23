@@ -17,7 +17,7 @@ import {
   XCircle,
   AlertTriangle,
   Loader2,
-} from "lucide-react";
+} from "@/components/icons";
 
 import { AppShell } from "@/components/AppShell";
 import { formatDateValue, useT, type TFunction, t, t as translate } from "@/lib/i18n";

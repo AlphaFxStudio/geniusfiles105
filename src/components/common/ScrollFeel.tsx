@@ -14,7 +14,7 @@
  * défilante interne, hors visualiseur et hors feuille modale.
  */
 import { useEffect, useRef } from "react";
-import { Loader2, ArrowDown } from "lucide-react";
+import { Loader2, ArrowDown } from "@/components/icons";
 
 import { getRefreshHandler } from "@/lib/gestures/pull-refresh";
 

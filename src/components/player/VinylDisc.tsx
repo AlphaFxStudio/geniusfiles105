@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Music4 } from "lucide-react";
+import { Music4 } from "@/components/icons";
 
 /**
  * Premium vinyl record illustration.

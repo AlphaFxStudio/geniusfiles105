@@ -9,7 +9,7 @@ import {
   KeyRound,
   Lock,
   Package,
-} from "lucide-react";
+} from "@/components/icons";
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import {
   type ArchiveCapabilities,

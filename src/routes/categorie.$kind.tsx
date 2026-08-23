@@ -20,7 +20,7 @@ import {
   useSelection as useGlobalSelection,
 } from "@/lib/files/selection-store";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { FolderSearch } from "lucide-react";
+import { FolderSearch } from "@/components/icons";
 import { InlineSearchField } from "@/components/files/InlineSearchField";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";

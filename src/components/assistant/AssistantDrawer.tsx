@@ -7,7 +7,7 @@
  * Chaque action agit réellement sur le stockage local des conversations.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, MessageSquare, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Check, MessageSquare, Pencil, Plus, Search, Trash2, X } from "@/components/icons";
 import { Portal } from "@/components/common/Portal";
 import { BACK_PRIORITY, registerBackHandler } from "@/lib/navigation/back-stack";
 import {
