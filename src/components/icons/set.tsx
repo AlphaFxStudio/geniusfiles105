@@ -10,25 +10,29 @@
  *   pour que chaque écran pointe vers la même famille sans exception.
  */
 import type { ComponentType, ReactElement } from "react";
-import type { Icon as PhosphorIcon, IconWeight } from "@phosphor-icons/react";
-import * as Ph from "@phosphor-icons/react";
+import * as Ph from "./phosphor";
+import type { PhIconProps } from "./phosphor";
 
 import type { GfIconComponent, GfIconProps } from "./GfIcon";
 
+type PhComponent = (props: PhIconProps) => ReactElement;
+type PhWeight = NonNullable<PhIconProps["weight"]>;
+
 /** Fabrique : fige la graisse et la taille par défaut du système. */
-function icon(Base: PhosphorIcon, weight: IconWeight = "bold"): GfIconComponent {
+function icon(Base: PhComponent, weight: PhWeight = "bold"): GfIconComponent {
   const Wrapped = ({ size = 24, strokeWidth: _ignored, ...rest }: GfIconProps): ReactElement => {
     const Component = Base as unknown as ComponentType<Record<string, unknown>>;
     return <Component size={size} weight={weight} {...rest} />;
   };
-  Wrapped.displayName = `Gf(${(Base as { displayName?: string }).displayName ?? "Icon"})`;
+  Wrapped.displayName = "GfIcon";
   return Wrapped;
 }
 
 /** Variante pleine : utilisée pour les états actifs et les vignettes. */
-function solid(Base: PhosphorIcon): GfIconComponent {
+function solid(Base: PhComponent): GfIconComponent {
   return icon(Base, "fill");
 }
+
 
 /* --------------------------------------------------------------------- */
 /* Familles de fichiers et stockages                                       */
