@@ -7,7 +7,16 @@
  * (zoom, search, page jump). No dependency on external viewers.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, ZoomIn, ZoomOut, Type, ChevronUp, ChevronDown, X, SquarePen } from "@/components/icons";
+import {
+  Search,
+  ZoomIn,
+  ZoomOut,
+  Type,
+  ChevronUp,
+  ChevronDown,
+  X,
+  SquarePen,
+} from "@/components/icons";
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import { extOf } from "@/lib/files/format";
 import { absolutePathOf } from "@/lib/viewer/source";
