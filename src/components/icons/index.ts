@@ -42,7 +42,7 @@ import {
   GfText,
   GfUsbDrive,
   GfVideo,
-} from "./gf-icons";
+} from "./set";
 
 /** Catégories de fichiers : une silhouette propre par famille, jamais une couleur seule. */
 export const FILE_KIND_ICON = {
