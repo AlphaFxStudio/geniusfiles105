@@ -1,0 +1,1479 @@
+/**
+ * High-level file operations for GeniusFiles.
+ *
+ * Native (Android): uses the GeniusFilesNative plugin — real filesystem
+ * writes under MANAGE_EXTERNAL_STORAGE.
+ * Web preview: mutates the in-memory mock dataset in `fs.ts` so the UI
+ * remains fully explorable inside Lovable.
+ *
+ * All batch operations report incremental progress and honour a cancel
+ * signal so the UI can offer "Annuler" during long copies / moves.
+ */
+import {
+  isAndroidNative,
+  listNativeDirectory,
+  nativePlugin,
+  type NativeStat,
+} from "@/lib/native/geniusfiles-native";
+import type { FileEntry, PathRef } from "./types";
+import { extOf, kindOf } from "./format";
+import { mockMutate, mockResolve, toAbsolutePath, type MockNode } from "./fs";
+import { recordOperation } from "./history";
+import { recordMockTrash, type MockTrashRecord } from "./trash";
+import { beginJob, finishJob, updateJob } from "@/lib/jobs/journal";
+import { dispatchFsPatch } from "@/lib/index/patches";
+import { chunks, runQueued, tick } from "./op-queue";
+import { namesStillPresent, nameExists } from "./verify";
+import { checkEntryName, checkOperationPath, checkOperationTarget } from "@/lib/security/paths";
+import { t } from "@/lib/i18n";
+import { trackEvent, trackFileAction } from "@/lib/native/analytics";
+
+function dispatchStorageChanged() {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new CustomEvent("gf:storage-changed"));
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Traduit un code d'erreur natif en message compréhensible.
+ * Aucun code brut (`IO_FAILED`, `DENIED`…) ne remonte à l'utilisateur.
+ */
+export function humanizeIoError(raw: unknown, fallback = t("ops.error.deleteFailed")): string {
+  const msg = raw instanceof Error ? raw.message : String(raw ?? "");
+  if (/DENIED|PERMISSION/i.test(msg)) return t("ops.error.accessDenied");
+  if (/NOT_FOUND|ENOENT/i.test(msg)) return t("ops.error.notFound");
+  if (/EXISTS/i.test(msg)) return t("ops.error.nameExists");
+  if (/NOT_A_DIRECTORY/i.test(msg)) return t("ops.error.notADirectory");
+  if (/NO_SPACE|ENOSPC/i.test(msg)) return t("ops.error.noSpace");
+  if (/UNSUPPORTED/i.test(msg)) return t("ops.error.unsupported");
+  if (/plugin|bridge/i.test(msg)) return t("ops.error.storageUnavailable");
+  return fallback;
+}
+
+/** Élimine les doublons de noms d'une sélection (deux écrans, même fichier). */
+function uniqueEntries(entries: FileEntry[]): FileEntry[] {
+  const seen = new Set<string>();
+  const out: FileEntry[] = [];
+  for (const e of entries) {
+    if (!e?.name || seen.has(e.name)) continue;
+    seen.add(e.name);
+    out.push(e);
+  }
+  return out;
+}
+
+export type ProgressEvent = {
+  /** Absolute number of items completed (files + directories). */
+  completed: number;
+  /** Best-effort total known so far. */
+  total: number;
+  /** Bytes processed for streamed content. */
+  bytes: number;
+  /** Best-effort total bytes (0 when unknown). */
+  totalBytes: number;
+  /** Label of the entry currently being processed. */
+  currentName: string;
+  /** ms since operation start. */
+  elapsedMs: number;
+  /** Estimated remaining ms — undefined when not enough data. */
+  etaMs?: number;
+};
+
+export type OperationSignal = {
+  cancelled: boolean;
+  onCancel: () => void;
+};
+
+export type OperationResult = {
+  ok: boolean;
+  succeeded: number;
+  failed: { name: string; reason: string }[];
+  cancelled: boolean;
+  /** Éléments volontairement ignorés par l'utilisateur (conflit). */
+  skipped?: number;
+  /** Éléments conservés en double sous un nouveau nom (conflit). */
+  renamed?: number;
+};
+
+/**
+ * Refuse d'un bloc un lot dont le dossier parent ou l'un des noms ciblés
+ * ne passe pas le garde-fou de sécurité. Renvoie `null` quand tout est
+ * légitime — le coût est négligeable devant une opération disque.
+ */
+function refusedTargets(parent: PathRef, entries: FileEntry[]): OperationResult | null {
+  const guard = checkOperationPath(parent);
+  if (!guard.ok) {
+    return {
+      ok: false,
+      succeeded: 0,
+      failed: entries.map((e) => ({ name: e.name, reason: guard.reason })),
+      cancelled: false,
+    };
+  }
+  const failed = entries
+    .map((e) => ({ entry: e, check: checkOperationTarget(parent, e.name) }))
+    .filter((r) => !r.check.ok);
+  if (failed.length === 0) return null;
+  return {
+    ok: false,
+    succeeded: 0,
+    failed: failed.map((r) => ({
+      name: r.entry.name,
+      reason: r.check.ok ? "" : r.check.reason,
+    })),
+    cancelled: false,
+  };
+}
+
+export function createSignal(): OperationSignal & { cancel: () => void } {
+  const s = { cancelled: false, onCancel: () => {} } as OperationSignal & { cancel: () => void };
+  s.cancel = () => {
+    s.cancelled = true;
+    s.onCancel();
+  };
+  return s;
+}
+
+function segmentsToPath(root: PathRef["rootId"], segments: string[]): PathRef {
+  return { rootId: root, segments };
+}
+
+function joinAbs(base: string, name: string): string {
+  return `${base.replace(/\/$/, "")}/${name}`;
+}
+
+function estimateEta(elapsed: number, done: number, total: number): number | undefined {
+  if (done <= 0 || total <= 0 || done >= total) return undefined;
+  return Math.max(0, Math.round((elapsed / done) * (total - done)));
+}
+
+/**
+ * Budget d'énumération d'un dossier.
+ *
+ * Au-delà de ce nombre de fichiers, GeniusFiles arrête de construire un
+ * plan détaillé en mémoire : la copie / le déplacement est confié à
+ * l'implémentation native, qui traite l'arborescence en flux. On évite
+ * ainsi OutOfMemory, StackOverflow et le gel du fil principal sur les
+ * dossiers de plusieurs dizaines de milliers d'éléments — la progression
+ * reste réelle, simplement à la granularité du dossier.
+ */
+const PLAN_FILE_BUDGET = 1500;
+/** Nombre d'entrées énumérées avant de rendre la main au rendu. */
+const PLAN_YIELD_EVERY = 400;
+
+type WalkPlan = {
+  files: { source: string; relative: string; size: number }[];
+  dirs: string[];
+  totalBytes: number;
+  /** Vrai quand le plan détaillé a été abandonné (trop volumineux). */
+  bulk: boolean;
+  /** Nombre d'éléments estimé, y compris en mode `bulk`. */
+  itemCount: number;
+};
+
+async function walkPlan(
+  absPath: string,
+  isDirectory: boolean,
+  signal?: OperationSignal,
+): Promise<WalkPlan> {
+  const files: WalkPlan["files"] = [];
+  const dirs: string[] = [];
+  let totalBytes = 0;
+
+  if (!isDirectory) {
+    const p = nativePlugin();
+    let size = 0;
+    if (p) {
+      try {
+        const s: NativeStat = await p.stat({ path: absPath });
+        size = s.size ?? 0;
+      } catch {
+        /* size stays 0 */
+      }
+    }
+    files.push({ source: absPath, relative: absPath.split("/").pop() ?? "file", size });
+    return { files, dirs, totalBytes: size, bulk: false, itemCount: 1 };
+  }
+
+  // Parcours itératif (jamais récursif) avec budget et respiration.
+  const rootName = absPath.split("/").pop() ?? "folder";
+  dirs.push(rootName);
+  const stack: { abs: string; rel: string }[] = [{ abs: absPath, rel: rootName }];
+  let seen = 0;
+  while (stack.length) {
+    if (signal?.cancelled) break;
+    const cur = stack.pop()!;
+    const res = await listNativeDirectory(cur.abs);
+    if (!res.ok) continue;
+    for (const e of res.listing.entries) {
+      if (e.name.startsWith(".")) continue;
+      seen++;
+      if (seen % PLAN_YIELD_EVERY === 0) await tick();
+      const childRel = `${cur.rel}/${e.name}`;
+      if (e.isDirectory) {
+        dirs.push(childRel);
+        stack.push({ abs: e.path, rel: childRel });
+      } else {
+        files.push({ source: e.path, relative: childRel, size: e.size ?? 0 });
+        totalBytes += e.size ?? 0;
+      }
+    }
+    if (files.length > PLAN_FILE_BUDGET) {
+      // Trop gros pour un plan détaillé : on bascule en mode natif global
+      // et on demande des totaux au système plutôt qu'en énumérant.
+      return bulkPlan(absPath, rootName);
+    }
+  }
+  return { files, dirs, totalBytes, bulk: false, itemCount: files.length + dirs.length };
+}
+
+/** Totaux d'un gros dossier obtenus par `stat` — sans énumération JS. */
+async function bulkPlan(absPath: string, rootName: string): Promise<WalkPlan> {
+  const p = nativePlugin();
+  let totalBytes = 0;
+  let itemCount = 0;
+  if (p) {
+    try {
+      const s: NativeStat = await p.stat({ path: absPath });
+      totalBytes = s.recursiveSize ?? 0;
+      itemCount = s.itemCount ?? 0;
+    } catch {
+      /* totaux inconnus — l'interface n'affichera que le réel */
+    }
+  }
+  return {
+    files: [],
+    dirs: [rootName],
+    totalBytes,
+    bulk: true,
+    itemCount: itemCount > 0 ? itemCount : 1,
+  };
+}
+
+/* ---------- create / rename ---------- */
+
+async function createDirectoryImpl(
+  parent: PathRef,
+  name: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const clean = name.trim();
+  if (!clean || /[\\/]/.test(clean)) return { ok: false, error: t("ops.error.invalidName") };
+  // Garde-fou central : ni sortie du dossier, ni emplacement protégé.
+  const guard = checkOperationPath(parent);
+  if (!guard.ok) return { ok: false, error: guard.reason };
+  const nameGuard = checkEntryName(clean);
+  if (!nameGuard.ok) return { ok: false, error: nameGuard.reason };
+  if (isAndroidNative()) {
+    const p = nativePlugin();
+    if (!p) return { ok: false, error: t("ops.error.pluginUnavailable") };
+    try {
+      const abs = joinAbs(toAbsolutePath(parent), clean);
+      await p.createDirectory({ path: abs });
+      // Contrôle réel : un `resolve()` du plugin ne suffit pas à déclarer
+      // le dossier créé (volume démonté, quota, chemin invalide…).
+      if (!(await nameExists(parent, clean))) {
+        return { ok: false, error: t("ops.error.createFailed") };
+      }
+      recordOperation({
+        kind: "mkdir",
+        summary: t("ops.mkdir.summary", { name: clean }),
+        source: parent,
+        names: [clean],
+        succeeded: 1,
+        failed: 0,
+      });
+      dispatchFsPatch({
+        op: "create",
+        rootId: parent.rootId,
+        segments: parent.segments,
+        name: clean,
+        isDirectory: true,
+        mtime: Date.now(),
+      });
+      dispatchStorageChanged();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: humanizeIoError(err, t("ops.error.createFailed")) };
+    }
+  }
+  // Mock (web preview).
+  const result = mockMutate(parent, (node) => {
+    if (!node.children) node.children = [];
+    if (node.children.some((c) => c.name === clean)) return "EXISTS";
+    node.children.push({ name: clean, isDirectory: true, children: [], mtime: Date.now() });
+    return null;
+  });
+  if (result === "EXISTS") return { ok: false, error: t("ops.error.nameExists") };
+  if (result) return { ok: false, error: result };
+  recordOperation({
+    kind: "mkdir",
+    summary: t("ops.mkdir.summary", { name: clean }),
+    source: parent,
+    names: [clean],
+    succeeded: 1,
+    failed: 0,
+  });
+  dispatchFsPatch({
+    op: "create",
+    rootId: parent.rootId,
+    segments: parent.segments,
+    name: clean,
+    isDirectory: true,
+    mtime: Date.now(),
+  });
+  dispatchStorageChanged();
+  return { ok: true };
+}
+
+async function renameEntryImpl(
+  parent: PathRef,
+  entry: FileEntry,
+  newName: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const clean = newName.trim();
+  if (!clean || /[\\/]/.test(clean)) return { ok: false, error: t("ops.error.invalidName") };
+  const guard = checkOperationTarget(parent, entry.name);
+  if (!guard.ok) return { ok: false, error: guard.reason };
+  const nameGuard = checkEntryName(clean);
+  if (!nameGuard.ok) return { ok: false, error: nameGuard.reason };
+  if (clean === entry.name) return { ok: true };
+  if (isAndroidNative()) {
+    const p = nativePlugin();
+    if (!p) return { ok: false, error: t("ops.error.pluginUnavailable") };
+    try {
+      const abs = joinAbs(toAbsolutePath(parent), entry.name);
+      await p.renamePath({ path: abs, newName: clean });
+      // Vérification croisée : le nouveau nom doit exister et l'ancien
+      // avoir disparu, sinon l'interface afficherait un faux succès.
+      const present = await namesStillPresent(parent, [entry.name, clean]);
+      if (!present.has(clean) || present.has(entry.name)) {
+        return { ok: false, error: t("ops.error.renameFailed") };
+      }
+      recordOperation({
+        kind: "rename",
+        summary: t("ops.rename.summary", { from: entry.name, to: clean }),
+        source: parent,
+        names: [entry.name, clean],
+        succeeded: 1,
+        failed: 0,
+      });
+      dispatchFsPatch({
+        op: "rename",
+        rootId: parent.rootId,
+        segments: parent.segments,
+        oldName: entry.name,
+        newName: clean,
+        isDirectory: entry.isDirectory,
+      });
+      dispatchStorageChanged();
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: humanizeIoError(err, t("ops.error.renameFailed")) };
+    }
+  }
+  const result = mockMutate(parent, (node) => {
+    if (!node.children) return "NOT_FOUND";
+    const target = node.children.find((c) => c.name === entry.name);
+    if (!target) return "NOT_FOUND";
+    if (node.children.some((c) => c.name === clean)) return "EXISTS";
+    target.name = clean;
+    target.mtime = Date.now();
+    return null;
+  });
+  if (result === "EXISTS") return { ok: false, error: t("ops.error.nameExists") };
+  if (result) return { ok: false, error: t("ops.error.renameFailed") };
+  recordOperation({
+    kind: "rename",
+    summary: t("ops.rename.summary", { from: entry.name, to: clean }),
+    source: parent,
+    names: [entry.name, clean],
+    succeeded: 1,
+    failed: 0,
+  });
+  dispatchFsPatch({
+    op: "rename",
+    rootId: parent.rootId,
+    segments: parent.segments,
+    oldName: entry.name,
+    newName: clean,
+    isDirectory: entry.isDirectory,
+  });
+  dispatchStorageChanged();
+  return { ok: true };
+}
+
+/* ---------- delete (soft — moves to trash) ---------- */
+
+/**
+ * Taille d'un lot de suppression.
+ *
+ * Le lot est volontairement court : chaque aller-retour natif reste
+ * bref (pas d'ANR), l'annulation est prise en compte entre deux lots et
+ * la progression avance réellement. Surtout, GeniusFiles n'énumère JAMAIS
+ * le contenu d'un dossier avant de le supprimer : la mise à la Corbeille
+ * est un déplacement (rename) atomique côté système, donc un dossier de
+ * 100 000 fichiers coûte autant qu'un fichier seul — aucun risque
+ * d'OutOfMemory ni de récursion JS.
+ */
+const DELETE_CHUNK = 12;
+
+export type DeleteOptions = {
+  onProgress?: (p: ProgressEvent) => void;
+  signal?: OperationSignal;
+};
+
+async function deleteEntriesImpl(
+  parent: PathRef,
+  entries: FileEntry[],
+  opts: DeleteOptions = {},
+): Promise<OperationResult> {
+  const targets = uniqueEntries(entries);
+  if (targets.length === 0) return { ok: true, succeeded: 0, failed: [], cancelled: false };
+  const refused = refusedTargets(parent, targets);
+  if (refused) return refused;
+  // Concurrence bornée : une suppression massive ne peut pas saturer
+  // l'appareil pendant qu'une copie tourne déjà.
+  return runQueued(() => runDelete(parent, targets, opts));
+}
+
+/** Retire un lot de l'arborescence simulée (aperçu web) + Corbeille. */
+function mockRemoveBatch(parent: PathRef, names: string[]): void {
+  const removed: MockNode[] = [];
+  mockMutate(parent, (node) => {
+    if (!node.children) return null;
+    const set = new Set(names);
+    for (const c of node.children) {
+      if (set.has(c.name)) removed.push(JSON.parse(JSON.stringify(c)) as MockNode);
+    }
+    node.children = node.children.filter((c) => !set.has(c.name));
+    return null;
+  });
+  if (removed.length === 0) return;
+  const now = Date.now();
+  const records: MockTrashRecord[] = removed.map((node, idx) => ({
+    id: `${now}_${idx}_${node.name}`,
+    name: node.name,
+    originalPath: `/storage/emulated/0/${[...parent.segments, node.name].join("/")}`,
+    isDirectory: node.isDirectory,
+    size: sumMock(node),
+    deletedAt: now,
+    originalMtime: node.mtime,
+    parentSegments: parent.segments,
+    rootId: parent.rootId,
+    snapshot: node,
+  }));
+  recordMockTrash(records);
+}
+
+async function runDelete(
+  parent: PathRef,
+  targets: FileEntry[],
+  opts: DeleteOptions,
+): Promise<OperationResult> {
+  const failed: OperationResult["failed"] = [];
+  const confirmed: FileEntry[] = [];
+  const movedRecords: { id: string; originalPath: string; trashPath: string }[] = [];
+  const total = targets.length;
+  // Seules les tailles réellement connues sont annoncées : jamais de
+  // volume inventé pour « faire avancer » la barre.
+  const totalBytes = targets.reduce((s, e) => s + (e.isDirectory ? 0 : (e.size ?? 0)), 0);
+  const started = Date.now();
+  let bytesDone = 0;
+
+  // Journal + notification permanente uniquement quand l'opération est
+  // réellement longue : une suppression unitaire reste silencieuse.
+  const jobId =
+    total > 8
+      ? beginJob({
+          kind: "delete",
+          title: total === 1 ? targets[0].name : t("count.items", { count: total }),
+          total,
+          totalBytes,
+          payload: { parent, entries: targets },
+          foreground: total > 200,
+        })
+      : null;
+
+  const emit = (currentName: string) => {
+    const completed = confirmed.length + failed.length;
+    const elapsedMs = Date.now() - started;
+    const etaMs = estimateEta(elapsedMs, completed, total);
+    if (jobId) {
+      updateJob(jobId, {
+        completed,
+        total,
+        bytes: bytesDone,
+        totalBytes,
+        currentName,
+        etaMs,
+      });
+    }
+    opts.onProgress?.({
+      completed,
+      total,
+      bytes: bytesDone,
+      totalBytes,
+      currentName,
+      elapsedMs,
+      etaMs,
+    });
+  };
+  emit(targets[0].name);
+
+  const native = isAndroidNative();
+  const p = native ? nativePlugin() : null;
+  if (native && !p) {
+    if (jobId) finishJob(jobId, "failed", t("ops.error.storageUnavailable"));
+    return {
+      ok: false,
+      succeeded: 0,
+      failed: targets.map((e) => ({ name: e.name, reason: t("ops.error.storageUnavailable") })),
+      cancelled: false,
+    };
+  }
+  const base = native ? toAbsolutePath(parent) : "";
+
+  let cancelled = false;
+  for (const batch of chunks(targets, DELETE_CHUNK)) {
+    if (opts.signal?.cancelled) {
+      cancelled = true;
+      break;
+    }
+    const names = batch.map((e) => e.name);
+    /** Motif remonté par le backend, par nom (peut rester vide). */
+    const reported = new Map<string, string>();
+
+    if (p) {
+      try {
+        const res = await p.moveToTrash({ paths: names.map((n) => joinAbs(base, n)) });
+        for (const mv of res.moved ?? []) movedRecords.push(mv);
+        for (const f of res.failed ?? []) {
+          reported.set(f.split("/").pop() ?? f, t("ops.error.itemInaccessible"));
+        }
+      } catch (err) {
+        // Une erreur globale n'implique pas que rien n'a été fait : la
+        // vérification disque ci-dessous tranche, élément par élément.
+        const reason = humanizeIoError(err, t("ops.error.deleteFailed"));
+        for (const n of names) reported.set(n, reason);
+      }
+    } else {
+      mockRemoveBatch(parent, names);
+    }
+
+    // ── Contrôle de l'état RÉEL du stockage. C'est lui, et non le code de
+    // retour du plugin, qui décide de ce que l'interface affiche.
+    let stillThere: Set<string>;
+    try {
+      stillThere = await namesStillPresent(parent, names);
+    } catch {
+      // Impossible de vérifier (volume retiré) : on ne prétend pas avoir
+      // réussi, on signale honnêtement.
+      stillThere = new Set(names);
+    }
+
+    for (const e of batch) {
+      if (stillThere.has(e.name)) {
+        failed.push({
+          name: e.name,
+          reason: reported.get(e.name) ?? t("ops.error.deleteFailedStillPresent"),
+        });
+      } else {
+        confirmed.push(e);
+        if (!e.isDirectory) bytesDone += e.size ?? 0;
+        // Patch chirurgical : l'élément disparaît de toutes les vues
+        // (dossier, catégories, recherche, récents, sélection) sans
+        // relire le dossier ni perdre la position de défilement.
+        dispatchFsPatch({
+          op: "delete",
+          rootId: parent.rootId,
+          segments: parent.segments,
+          name: e.name,
+          isDirectory: e.isDirectory,
+          size: e.isDirectory ? undefined : (e.size ?? 0),
+        });
+      }
+    }
+    emit(batch[batch.length - 1]?.name ?? "");
+    // Respiration : le fil principal reste disponible pour le rendu.
+    await tick();
+  }
+
+  const succeeded = confirmed.length;
+  if (succeeded > 0 || failed.length > 0) {
+    recordOperation({
+      kind: "delete",
+      summary: t("ops.delete.summary", {
+        count: succeeded,
+        name: confirmed[0]?.name ?? targets[0].name,
+      }),
+      source: parent,
+      names: confirmed.map((e) => e.name),
+      succeeded,
+      failed: failed.length,
+      ...(movedRecords.length > 0
+        ? { restorable: { kind: "trash" as const, items: movedRecords } }
+        : {}),
+    });
+  }
+  if (succeeded > 0) dispatchStorageChanged();
+  if (jobId) {
+    finishJob(
+      jobId,
+      cancelled ? "cancelled" : failed.length === 0 ? "done" : "failed",
+      failed.length ? t("ops.transfer.failuresCount", { count: failed.length }) : undefined,
+    );
+  }
+  return { ok: failed.length === 0 && !cancelled, succeeded, failed, cancelled };
+}
+
+function sumMock(node: MockNode): number {
+  if (!node.isDirectory) return node.size ?? 0;
+  return (node.children ?? []).reduce((s, c) => s + sumMock(c), 0);
+}
+
+/* ---------- copy / move ---------- */
+
+type TransferOptions = {
+  mode: "copy" | "move";
+  onProgress?: (p: ProgressEvent) => void;
+  signal?: OperationSignal;
+  /**
+   * Noms d'éléments (racine de la sélection) que l'utilisateur a
+   * explicitement autorisés à remplacer l'existant. Aucun écrasement
+   * n'a jamais lieu en dehors de cette liste.
+   */
+  overwrite?: Iterable<string>;
+  /**
+   * Nom d'origine → nom unique à utiliser à destination (« photo (1).jpg »).
+   * L'utilisateur a demandé à conserver les deux éléments.
+   */
+  rename?: Map<string, string>;
+  /**
+   * Conflit détecté en cours d'exécution (élément apparu entre-temps, ou
+   * fusion de dossier). Le moteur suspend l'élément concerné, attend la
+   * décision, puis reprend. Sans ce rappel, le conflit reste une erreur.
+   */
+  onConflict?: (item: {
+    name: string;
+    isDirectory: boolean;
+  }) => Promise<"overwrite" | "rename" | "skip">;
+};
+
+/**
+ * Copie / déplacement en flux d'une arborescence, sans plan mémoire.
+ *
+ * Le parcours est itératif et ne conserve qu'une pile de dossiers : un
+ * dossier de 200 000 fichiers se copie avec une empreinte mémoire
+ * constante. La main est rendue régulièrement au rendu, et l'annulation
+ * est honorée entre deux fichiers.
+ */
+async function copyTreeStreaming(
+  p: NonNullable<ReturnType<typeof nativePlugin>>,
+  srcRoot: string,
+  dstRoot: string,
+  ctx: {
+    signal?: OperationSignal;
+    failed: OperationResult["failed"];
+    /** Fusion avec remplacement des fichiers déjà présents. */
+    overwrite?: boolean;
+    /** Décision utilisateur lorsqu'un fichier existe déjà à destination. */
+    onExists?: () => Promise<"overwrite" | "rename" | "skip">;
+    onFile: (size: number, name: string) => void;
+  },
+): Promise<"ok" | "skip"> {
+  const stack: { abs: string; dst: string }[] = [{ abs: srcRoot, dst: dstRoot }];
+  let processed = 0;
+  let replace = ctx.overwrite ?? false;
+  let keepBoth = false;
+  while (stack.length) {
+    if (ctx.signal?.cancelled) return "ok";
+    const cur = stack.pop()!;
+    try {
+      await p.createDirectory({ path: cur.dst });
+    } catch {
+      /* déjà présent */
+    }
+    const res = await listNativeDirectory(cur.abs);
+    if (!res.ok) continue;
+    for (const e of res.listing.entries) {
+      if (ctx.signal?.cancelled) return "ok";
+      if (e.name.startsWith(".")) continue;
+      const target = joinAbs(cur.dst, e.name);
+      if (e.isDirectory) {
+        stack.push({ abs: e.path, dst: target });
+        continue;
+      }
+      /** Conserve les deux versions : « photo (1).jpg », « photo (2).jpg »… */
+      const copyKeepingBoth = async () => {
+        const { base, ext } = splitNameExt(e.name);
+        for (let i = 1; i <= 50; i++) {
+          try {
+            await p.copyFile({
+              source: e.path,
+              destination: joinAbs(cur.dst, `${base} (${i})${ext}`),
+              overwrite: false,
+            });
+            ctx.onFile(e.size ?? 0, e.name);
+            return;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (/EXISTS/i.test(msg)) continue;
+            ctx.failed.push({
+              name: e.name,
+              reason: humanizeIoError(err, t("ops.error.copyFailed")),
+            });
+            return;
+          }
+        }
+        ctx.failed.push({ name: e.name, reason: t("ops.error.copyFailed") });
+      };
+      try {
+        if (keepBoth) {
+          await copyKeepingBoth();
+        } else {
+          await p.copyFile({
+            source: e.path,
+            destination: target,
+            overwrite: replace,
+          });
+          ctx.onFile(e.size ?? 0, e.name);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/EXISTS/i.test(msg) && !replace && ctx.onExists) {
+          const choice = await ctx.onExists();
+          if (choice === "skip") return "skip";
+          if (choice === "rename") {
+            keepBoth = true;
+            await copyKeepingBoth();
+          } else {
+            replace = true;
+            try {
+              await p.copyFile({ source: e.path, destination: target, overwrite: true });
+              ctx.onFile(e.size ?? 0, e.name);
+            } catch (retryErr) {
+              ctx.failed.push({
+                name: e.name,
+                reason: humanizeIoError(retryErr, t("ops.error.copyFailed")),
+              });
+            }
+          }
+        } else {
+          ctx.failed.push({
+            name: e.name,
+            reason: humanizeIoError(err, t("ops.error.copyFailed")),
+          });
+        }
+      }
+      if (++processed % 24 === 0) await tick();
+    }
+  }
+  return "ok";
+}
+
+/** « photo.jpg » → { base: "photo", ext: ".jpg" }. */
+function splitNameExt(name: string): { base: string; ext: string } {
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0) return { base: name, ext: "" };
+  return { base: name.slice(0, dot), ext: name.slice(dot) };
+}
+
+async function transferEntriesImpl(
+  source: PathRef,
+  entries: FileEntry[],
+  destination: PathRef,
+  opts: TransferOptions,
+): Promise<OperationResult> {
+  const targets = uniqueEntries(entries);
+  if (targets.length === 0) return { ok: true, succeeded: 0, failed: [], cancelled: false };
+  const refusedSource = refusedTargets(source, targets);
+  if (refusedSource) return refusedSource;
+  const destGuard = checkOperationPath(destination);
+  if (!destGuard.ok) {
+    return {
+      ok: false,
+      succeeded: 0,
+      failed: targets.map((e) => ({ name: e.name, reason: destGuard.reason })),
+      cancelled: false,
+    };
+  }
+  return runQueued(() => runTransferEntries(source, targets, destination, opts));
+}
+
+async function runTransferEntries(
+  source: PathRef,
+  entries: FileEntry[],
+  destination: PathRef,
+  opts: TransferOptions,
+): Promise<OperationResult> {
+  const failed: OperationResult["failed"] = [];
+  let succeeded = 0;
+  let skipped = 0;
+  const userCancelled = false;
+  /** Décisions d'écrasement validées par l'utilisateur (jamais implicites). */
+  const overwriteNames = new Set(opts.overwrite ?? []);
+  const mayOverwrite = (name: string) => overwriteNames.has(name);
+  /** Nom d'origine → nom unique à destination (choix « conserver les deux »). */
+  const renameMap = new Map(opts.rename ?? []);
+  const reservedNames = new Set(renameMap.values());
+  const targetName = (name: string) => renameMap.get(name) ?? name;
+  /** Cherche « photo (1).jpg » libre à destination, sans écraser quoi que ce soit. */
+  const freeNameAt = async (name: string, isDirectory: boolean): Promise<string> => {
+    const dot = isDirectory ? -1 : name.lastIndexOf(".");
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
+    const candidates: string[] = [];
+    for (let i = 1; i <= 50; i++) {
+      const c = `${base} (${i})${ext}`;
+      if (!reservedNames.has(c)) candidates.push(c);
+    }
+    let taken = new Set<string>();
+    try {
+      taken = await namesStillPresent(destination, candidates);
+    } catch {
+      /* vérification impossible : premier candidat connu */
+    }
+    const pick = candidates.find((c) => !taken.has(c)) ?? `${base} (${Date.now()})${ext}`;
+    reservedNames.add(pick);
+    return pick;
+  };
+  /** Une seule question par élément racine, quel que soit le nombre de fichiers. */
+  const decided = new Map<string, "overwrite" | "rename" | "skip">();
+  const askConflict = async (item: {
+    name: string;
+    isDirectory: boolean;
+  }): Promise<"overwrite" | "rename" | "skip" | "none"> => {
+    if (!opts.onConflict) return "none";
+    const known = decided.get(item.name);
+    if (known) return known;
+    const choice = await opts.onConflict(item);
+    decided.set(item.name, choice);
+    if (choice === "overwrite") overwriteNames.add(item.name);
+    if (choice === "rename" && !renameMap.has(item.name))
+      renameMap.set(item.name, await freeNameAt(item.name, item.isDirectory));
+    return choice;
+  };
+
+  if (!isAndroidNative()) {
+    // Mock — moves and copies at once, ignoring progress detail.
+    const dstOk = mockResolve(destination);
+    if (!dstOk) {
+      return {
+        ok: false,
+        succeeded: 0,
+        failed: entries.map((e) => ({ name: e.name, reason: t("ops.error.destinationMissing") })),
+        cancelled: false,
+      };
+    }
+    // Conflit tardif (élément apparu depuis la détection groupée) :
+    // l'utilisateur décide avant toute écriture.
+    const existingNames = new Set((mockResolve(destination)?.children ?? []).map((c) => c.name));
+    const skippedNames = new Set<string>();
+    for (const e of entries) {
+      if (!existingNames.has(e.name) || mayOverwrite(e.name) || renameMap.has(e.name)) continue;
+      const choice = await askConflict(e);
+      if (choice === "skip" || choice === "none") {
+        skippedNames.add(e.name);
+        skipped++;
+      }
+    }
+    if (skippedNames.size) entries = entries.filter((e) => !skippedNames.has(e.name));
+    if (entries.length === 0)
+      return { ok: true, succeeded: 0, failed: [], cancelled: false, skipped };
+    mockMutate(source, (srcNode) => {
+      if (!srcNode.children) return null;
+      const names = new Set(entries.map((e) => e.name));
+      const moving = srcNode.children.filter((c) => names.has(c.name));
+      // clone for copy, extract for move
+      const cloned = moving.map((n) => JSON.parse(JSON.stringify(n)));
+      mockMutate(destination, (dstNode) => {
+        if (!dstNode.children) dstNode.children = [];
+        for (const n of cloned) {
+          const originalName = n.name;
+          n.name = targetName(originalName);
+          const existing = dstNode.children.findIndex((c) => c.name === n.name);
+          if (existing >= 0 && !mayOverwrite(originalName)) {
+            failed.push({ name: originalName, reason: t("ops.error.alreadyExists") });
+            continue;
+          }
+          if (existing >= 0) dstNode.children[existing] = n;
+          else dstNode.children.push(n);
+          succeeded++;
+        }
+        return null;
+      });
+
+      if (opts.mode === "move") {
+        const successNames = new Set(
+          moving.map((n) => n.name).filter((n) => !failed.some((f) => f.name === n)),
+        );
+        srcNode.children = srcNode.children.filter((c) => !successNames.has(c.name));
+      }
+
+      return null;
+    });
+    recordOperation({
+      kind: opts.mode,
+      summary:
+        succeeded === 1
+          ? t(opts.mode === "copy" ? "files.op.copiedOne" : "files.op.movedOne", {
+              name: entries[0]?.name ?? "",
+            })
+          : t(opts.mode === "copy" ? "files.op.copiedMany" : "files.op.movedMany", {
+              count: succeeded,
+            }),
+      source,
+      destination,
+      names: entries.map((e) => e.name),
+      succeeded,
+      failed: failed.length,
+    });
+    // Mêmes patchs chirurgicaux qu'en natif : l'aperçu web se comporte
+    // exactement comme l'appareil.
+    const okNames = new Set(
+      entries.map((e) => e.name).filter((n) => !failed.some((f) => f.name === n)),
+    );
+    for (const e of entries) {
+      if (!okNames.has(e.name)) continue;
+      if (opts.mode === "move") {
+        dispatchFsPatch({
+          op: "move",
+          fromRootId: source.rootId,
+          fromSegments: source.segments,
+          fromName: e.name,
+          toRootId: destination.rootId,
+          toSegments: destination.segments,
+          toName: targetName(e.name),
+          isDirectory: e.isDirectory,
+        });
+      } else {
+        dispatchFsPatch({
+          op: "create",
+          rootId: destination.rootId,
+          segments: destination.segments,
+          name: targetName(e.name),
+
+          isDirectory: e.isDirectory,
+          size: e.size,
+          mtime: e.mtime,
+        });
+      }
+    }
+    if (succeeded > 0) dispatchStorageChanged();
+    return { ok: failed.length === 0, succeeded, failed, cancelled: false };
+  }
+
+  const p = nativePlugin();
+  if (!p) {
+    return {
+      ok: false,
+      succeeded: 0,
+      failed: entries.map((e) => ({ name: e.name, reason: t("ops.error.pluginUnavailable") })),
+      cancelled: false,
+    };
+  }
+
+  const srcAbs = toAbsolutePath(source);
+  const dstAbs = toAbsolutePath(destination);
+  const started = Date.now();
+  let bytesDone = 0;
+  let completed = 0;
+
+  // Plan borné : détaillé quand c'est raisonnable, en flux au-delà.
+  type Plan = { entry: FileEntry } & WalkPlan;
+  const plans: Plan[] = [];
+  let grandTotalBytes = 0;
+  let grandTotalItems = 0;
+  for (const e of entries) {
+    if (opts.signal?.cancelled) break;
+    const abs = joinAbs(srcAbs, e.name);
+    const walk = await walkPlan(abs, e.isDirectory, opts.signal);
+    plans.push({ entry: e, ...walk });
+    grandTotalBytes += walk.totalBytes;
+    grandTotalItems += walk.bulk ? walk.itemCount : walk.files.length + walk.dirs.length;
+    await tick();
+  }
+
+  // Journal — enables resume if the process is killed mid-transfer.
+  const jobId = beginJob({
+    kind: opts.mode,
+    title: entries.length === 1 ? entries[0].name : t("count.items", { count: entries.length }),
+    total: grandTotalItems,
+    totalBytes: grandTotalBytes,
+    payload: { source, destination, entries, mode: opts.mode },
+    // Les transferts affichent toujours une notification permanente :
+    // l'utilisateur peut quitter l'application sans perdre le suivi.
+    foreground: true,
+  });
+
+  let lastSpeedTick = started;
+  let lastSpeedBytes = 0;
+  let speedBps = 0;
+  const emit = (name: string) => {
+    const now = Date.now();
+    if (now - lastSpeedTick >= 400) {
+      const inst = ((bytesDone - lastSpeedBytes) / (now - lastSpeedTick)) * 1000;
+      speedBps = speedBps > 0 ? speedBps * 0.7 + Math.max(0, inst) * 0.3 : Math.max(0, inst);
+      lastSpeedTick = now;
+      lastSpeedBytes = bytesDone;
+    }
+    updateJob(jobId, {
+      completed,
+      bytes: bytesDone,
+      totalBytes: grandTotalBytes,
+      total: grandTotalItems,
+      speedBps,
+      currentName: name,
+      etaMs: estimateEta(now - started, bytesDone || completed, grandTotalBytes || grandTotalItems),
+    });
+    opts.onProgress?.({
+      completed,
+      total: grandTotalItems,
+      bytes: bytesDone,
+      totalBytes: grandTotalBytes,
+      currentName: name,
+      elapsedMs: Date.now() - started,
+      etaMs: estimateEta(
+        Date.now() - started,
+        bytesDone || completed,
+        grandTotalBytes || grandTotalItems,
+      ),
+    });
+  };
+  emit(entries[0]?.name ?? "");
+
+  outer: for (const plan of plans) {
+    if (opts.signal?.cancelled) break;
+    const srcRoot = joinAbs(srcAbs, plan.entry.name);
+    /** Nom réellement écrit à destination (différent si « conserver les deux »). */
+    let dstName = targetName(plan.entry.name);
+    const dstRootOf = () => joinAbs(dstAbs, dstName);
+    /** Chemin de destination d'un élément du plan, préfixe renommé si besoin. */
+    const dstOf = (relative: string) =>
+      joinAbs(dstAbs, dstName + relative.slice(plan.entry.name.length));
+
+    /**
+     * Confirme le résultat sur le stockage réel : l'élément doit être
+     * présent à destination et, pour un déplacement, absent de la source.
+     * Sans cette confirmation, aucun succès n'est annoncé à l'interface.
+     */
+    const confirmed = async (): Promise<boolean> => {
+      try {
+        const arrived = await namesStillPresent(destination, [dstName]);
+        if (!arrived.has(dstName)) return false;
+        if (opts.mode === "move") {
+          const left = await namesStillPresent(source, [plan.entry.name]);
+          if (left.has(plan.entry.name)) return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    /** Met à jour les vues de façon chirurgicale (ni rescan, ni reset). */
+    const announce = () => {
+      succeeded++;
+      if (opts.mode === "move") {
+        dispatchFsPatch({
+          op: "move",
+          fromRootId: source.rootId,
+          fromSegments: source.segments,
+          fromName: plan.entry.name,
+          toRootId: destination.rootId,
+          toSegments: destination.segments,
+          toName: dstName,
+          isDirectory: plan.entry.isDirectory,
+        });
+      } else {
+        dispatchFsPatch({
+          op: "create",
+          rootId: destination.rootId,
+          segments: destination.segments,
+          name: dstName,
+          isDirectory: plan.entry.isDirectory,
+          size: plan.entry.size,
+          mtime: plan.entry.mtime,
+        });
+      }
+      emit(plan.entry.name);
+    };
+
+    // Voie rapide : un déplacement sur le même volume est un rename
+    // atomique — instantané même pour un dossier énorme.
+    if (opts.mode === "move") {
+      let renamed = false;
+      let replace = mayOverwrite(plan.entry.name);
+      try {
+        await p.moveFile({ source: srcRoot, destination: dstRootOf(), overwrite: replace });
+        renamed = true;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/EXISTS/i.test(msg) && !replace) {
+          // Un doublon n'est pas une erreur : l'utilisateur tranche.
+          const choice = await askConflict(plan.entry);
+          if (choice === "skip") {
+            skipped++;
+            continue;
+          }
+          if (choice === "none") {
+            failed.push({
+              name: plan.entry.name,
+              reason: t("ops.error.alreadyExistsAtDestination"),
+            });
+            continue;
+          }
+          if (choice === "rename") {
+            dstName = targetName(plan.entry.name);
+            try {
+              await p.moveFile({ source: srcRoot, destination: dstRootOf(), overwrite: false });
+              renamed = true;
+            } catch {
+              /* repli sur copie + suppression ci-dessous */
+            }
+          } else {
+            replace = true;
+            try {
+              await p.moveFile({ source: srcRoot, destination: dstRootOf(), overwrite: true });
+              renamed = true;
+            } catch {
+              /* repli sur copie + suppression ci-dessous */
+            }
+          }
+        }
+        // Volumes différents, ou dossier existant à fusionner : repli sur
+        // copie (avec remplacement fichier par fichier) puis suppression.
+      }
+      if (renamed) {
+        if (await confirmed()) {
+          completed += plan.bulk ? plan.itemCount : plan.files.length + plan.dirs.length;
+          bytesDone += plan.totalBytes;
+          announce();
+        } else {
+          failed.push({
+            name: plan.entry.name,
+            reason: t("ops.error.moveUnconfirmed"),
+          });
+        }
+        continue;
+      }
+    }
+
+    if (plan.bulk) {
+      // Trop volumineux pour un plan détaillé : copie en flux, empreinte
+      // mémoire constante, progression réelle fichier par fichier.
+      const outcome = await copyTreeStreaming(p, srcRoot, dstRootOf(), {
+        signal: opts.signal,
+        failed,
+        overwrite: mayOverwrite(plan.entry.name),
+        onExists: async () => {
+          const choice = await askConflict(plan.entry);
+          return choice === "none" ? "skip" : choice;
+        },
+        onFile: (size, name) => {
+          bytesDone += size;
+          completed++;
+          emit(name);
+        },
+      });
+      if (outcome === "skip") {
+        skipped++;
+        continue;
+      }
+    } else {
+      // Squelette de dossiers.
+      for (const relDir of plan.dirs) {
+        if (opts.signal?.cancelled) break outer;
+        try {
+          await p.createDirectory({ path: dstOf(relDir) });
+        } catch {
+          /* déjà présent */
+        }
+      }
+      let done = 0;
+      let replaceFiles = mayOverwrite(plan.entry.name);
+      let skipEntry = false;
+      for (const file of plan.files) {
+        if (opts.signal?.cancelled) break outer;
+        const rel = file.relative;
+        try {
+          await p.copyFile({
+            source: file.source,
+            destination: dstOf(rel),
+            overwrite: replaceFiles,
+          });
+          bytesDone += file.size;
+          completed++;
+          emit(rel.split("/").pop() ?? rel);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (/EXISTS/i.test(msg) && !replaceFiles) {
+            const choice = await askConflict(plan.entry);
+            if (choice === "skip" || choice === "none") {
+              skipped++;
+              skipEntry = true;
+              break;
+            }
+            if (choice === "rename") {
+              // Conserver les deux : la copie repart sous un nom libre.
+              dstName = targetName(plan.entry.name);
+              for (const relDir of plan.dirs) {
+                try {
+                  await p.createDirectory({ path: dstOf(relDir) });
+                } catch {
+                  /* déjà présent */
+                }
+              }
+            } else {
+              replaceFiles = true;
+            }
+            try {
+              await p.copyFile({
+                source: file.source,
+                destination: dstOf(rel),
+                overwrite: replaceFiles,
+              });
+              bytesDone += file.size;
+              completed++;
+              emit(rel.split("/").pop() ?? rel);
+            } catch (retryErr) {
+              failed.push({
+                name: rel,
+                reason: humanizeIoError(retryErr, t("ops.error.copyFailed")),
+              });
+            }
+          } else {
+            failed.push({ name: rel, reason: humanizeIoError(err, t("ops.error.copyFailed")) });
+          }
+        }
+        // Respiration périodique : le fil principal reste fluide.
+        if (++done % 24 === 0) await tick();
+      }
+      if (skipEntry) continue;
+      completed += plan.dirs.length;
+    }
+
+    if (opts.signal?.cancelled) break outer;
+
+    if (opts.mode === "move") {
+      // La source n'est retirée qu'après une copie confirmée : aucune
+      // perte de données possible en cas d'échec partiel.
+      const arrived = await namesStillPresent(destination, [dstName]);
+      if (!arrived.has(dstName)) {
+        failed.push({ name: plan.entry.name, reason: t("ops.error.copyUnconfirmedSourceKept") });
+        continue;
+      }
+
+      try {
+        await p.deletePath({ path: srcRoot });
+      } catch {
+        /* source conservée — l'utilisateur peut réessayer */
+      }
+    }
+    if (await confirmed()) announce();
+    else failed.push({ name: plan.entry.name, reason: t("ops.error.transferUnconfirmed") });
+    await tick();
+  }
+
+  const cancelled = Boolean(opts.signal?.cancelled) || userCancelled;
+  recordOperation({
+    kind: opts.mode,
+    summary: t(opts.mode === "copy" ? "ops.transfer.copySummary" : "ops.transfer.moveSummary", {
+      count: succeeded,
+      name: entries[0]?.name ?? "",
+    }),
+    source,
+    destination,
+    names: entries.map((e) => e.name),
+    succeeded,
+    failed: failed.length,
+  });
+  finishJob(
+    jobId,
+    cancelled ? "cancelled" : failed.length === 0 ? "done" : "failed",
+    failed.length ? t("ops.transfer.failuresCount", { count: failed.length }) : undefined,
+  );
+  if (succeeded > 0) dispatchStorageChanged();
+  return {
+    ok: failed.length === 0 && !cancelled,
+    succeeded,
+    failed,
+    cancelled,
+    skipped,
+    renamed: renameMap.size,
+  };
+}
+
+/* ---------- share ---------- */
+
+async function shareEntriesImpl(
+  parent: PathRef,
+  entries: FileEntry[],
+): Promise<{ ok: boolean; error?: string }> {
+  const parentGuard = checkOperationPath(parent);
+  if (!parentGuard.ok) return { ok: false, error: parentGuard.reason };
+  // Un partage ne transmet que des fichiers réellement ciblés, jamais un
+  // dossier entier ni une entrée dont le nom sort de l'emplacement.
+  const files = entries.filter((e) => !e.isDirectory && checkOperationTarget(parent, e.name).ok);
+  if (files.length === 0)
+    return {
+      ok: false,
+      error: t("ops.error.shareNoFiles"),
+    };
+  if (!isAndroidNative()) {
+    recordOperation({
+      kind: "share",
+      summary: t("ops.share.summary", { count: files.length, name: files[0]?.name ?? "" }),
+      source: parent,
+      names: files.map((f) => f.name),
+      succeeded: files.length,
+      failed: 0,
+    });
+    return { ok: true };
+  }
+  const p = nativePlugin();
+  if (!p) return { ok: false, error: t("ops.error.pluginUnavailable") };
+  const paths = files.map((e) => joinAbs(toAbsolutePath(parent), e.name));
+  try {
+    await p.shareFiles({ paths });
+    recordOperation({
+      kind: "share",
+      summary: t("ops.share.summary", { count: files.length, name: files[0]?.name ?? "" }),
+      source: parent,
+      names: files.map((f) => f.name),
+      succeeded: files.length,
+      failed: 0,
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: msg || t("ops.error.shareFailed") };
+  }
+}
+
+/* ---------- details ---------- */
+
+export type DetailsInfo = {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size?: number;
+  mtime?: number;
+  itemCount?: number;
+  ext?: string;
+};
+
+export async function readDetails(parent: PathRef, entry: FileEntry): Promise<DetailsInfo> {
+  const base: DetailsInfo = {
+    name: entry.name,
+    path: joinAbs(toAbsolutePath(parent), entry.name),
+    isDirectory: entry.isDirectory,
+    size: entry.size,
+    mtime: entry.mtime,
+    ext: entry.ext ?? extOf(entry.name),
+  };
+  if (isAndroidNative()) {
+    const p = nativePlugin();
+    if (!p) return base;
+    try {
+      const s: NativeStat = await p.stat({ path: base.path });
+      return {
+        ...base,
+        size: entry.isDirectory ? (s.recursiveSize ?? 0) : (s.size ?? entry.size),
+        mtime: s.mtime ?? entry.mtime,
+        itemCount: entry.isDirectory ? s.itemCount : undefined,
+      };
+    } catch {
+      return base;
+    }
+  }
+  // Mock — walk children to compute size when directory.
+  if (entry.isDirectory) {
+    const node = mockResolve({ rootId: parent.rootId, segments: [...parent.segments, entry.name] });
+    if (node) {
+      let size = 0;
+      let count = 0;
+      const walk = (n: MockNode) => {
+        if (!n.isDirectory) {
+          size += n.size ?? 0;
+          count++;
+          return;
+        }
+        for (const c of n.children ?? []) walk(c);
+      };
+      walk(node);
+      return { ...base, size, itemCount: count };
+    }
+  }
+  return base;
+}
+
+export { kindOf };
+
+/* ────────────────────────────────────────────────────────────────
+   Mesure d'usage (Analytics)
+
+   Chaque opération majeure remonte uniquement : le type d'action, son
+   issue (succès / échec / partiel / annulé) et un nombre d'éléments
+   arrondi en paliers. Jamais de nom, de chemin ni de contenu.
+   ──────────────────────────────────────────────────────────────── */
+
+export async function createDirectory(
+  parent: PathRef,
+  name: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await createDirectoryImpl(parent, name);
+  trackEvent("file_action", { action: "create_folder", result: res.ok ? "success" : "failure" });
+  return res;
+}
+
+export async function renameEntry(
+  parent: PathRef,
+  entry: FileEntry,
+  newName: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await renameEntryImpl(parent, entry, newName);
+  trackEvent("file_action", {
+    action: "rename",
+    kind: kindOf(entry.name, entry.isDirectory),
+    result: res.ok ? "success" : "failure",
+  });
+  return res;
+}
+
+export async function deleteEntries(
+  parent: PathRef,
+  entries: FileEntry[],
+  opts: DeleteOptions = {},
+): Promise<OperationResult> {
+  const res = await deleteEntriesImpl(parent, entries, opts);
+  trackFileAction("delete", res);
+  return res;
+}
+
+export async function transferEntries(
+  source: PathRef,
+  entries: FileEntry[],
+  destination: PathRef,
+  opts: TransferOptions,
+): Promise<OperationResult> {
+  const res = await transferEntriesImpl(source, entries, destination, opts);
+  trackFileAction(opts.mode === "move" ? "move" : "copy", res);
+  return res;
+}
+
+export async function shareEntries(
+  parent: PathRef,
+  entries: FileEntry[],
+): Promise<{ ok: boolean; error?: string }> {
+  const res = await shareEntriesImpl(parent, entries);
+  trackEvent("file_action", {
+    action: "share",
+    result: res.ok ? "success" : "failure",
+    count: entries.length,
+  });
+  return res;
+}
