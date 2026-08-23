@@ -388,13 +388,20 @@ function SystemIntegrationBridge() {
     // d'automatisations. Aucune permission n'est demandée ici (les
     // notifications sont demandées à l'usage réel).
     let stop: (() => void) | undefined;
+    let cancelled = false;
     const start = () => {
       // Index persistant des catégories : chargé depuis le disque, puis
       // rafraîchi de façon incrémentale. Les catégories s'ouvrent ensuite
       // instantanément, sans jamais relancer d'analyse.
-      void startMediaIndexer();
-      stop = startAutomationScheduler();
+      void import("../lib/files/categories").then((m) => {
+        if (!cancelled) void m.startMediaIndexer();
+      });
+      void import("../lib/automations/scheduler").then((m) => {
+        if (cancelled) return;
+        stop = m.startAutomationScheduler();
+      });
     };
+
     const canIdle = typeof window !== "undefined" && "requestIdleCallback" in window;
     const idle: number = canIdle
       ? window.requestIdleCallback(start, { timeout: 1500 })
