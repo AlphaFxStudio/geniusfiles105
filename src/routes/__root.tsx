@@ -407,10 +407,12 @@ function SystemIntegrationBridge() {
       ? window.requestIdleCallback(start, { timeout: 1500 })
       : window.setTimeout(start, 300);
     return () => {
+      cancelled = true;
       if (canIdle) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
       stop?.();
     };
+
   }, []);
   return null;
 }
