@@ -18,6 +18,33 @@ import type { PathRef } from "./types";
 const cache = new Map<string, number>();
 const inflight = new Map<string, Promise<number | null>>();
 
+/**
+ * File d'attente à concurrence limitée : le comptage des dossiers passe par
+ * le pont natif, et une liste qui défile pouvait en déclencher des dizaines
+ * simultanément — ce qui saturait le pont et retardait les interactions.
+ * Trois requêtes en vol suffisent à remplir l'écran sans jamais gêner le
+ * défilement ni les actions de l'utilisateur.
+ */
+const MAX_CONCURRENT = 3;
+let running = 0;
+const queue: Array<() => void> = [];
+
+function schedule<T>(task: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const run = () => {
+      running++;
+      task()
+        .then(resolve, reject)
+        .finally(() => {
+          running--;
+          queue.shift()?.();
+        });
+    };
+    if (running < MAX_CONCURRENT) run();
+    else queue.push(run);
+  });
+}
+
 function keyOf(parent: PathRef, name: string): string {
   return `${parent.rootId}:${[...parent.segments, name].join("/")}`;
 }
@@ -65,7 +92,7 @@ export function useFolderCount(parent: PathRef | null | undefined, name: string,
     let alive = true;
     let pending = inflight.get(key);
     if (!pending) {
-      pending = resolveCount(parent, name);
+      pending = schedule(() => resolveCount(parent, name));
       inflight.set(key, pending);
       void pending.finally(() => inflight.delete(key));
     }
