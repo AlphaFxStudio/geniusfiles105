@@ -17,8 +17,10 @@ import { useSystemIntegration } from "../lib/native/use-system-integration";
 import { StorageAccessDialog } from "../components/storage/StorageAccessDialog";
 import { BackNavigator } from "../components/navigation/BackNavigator";
 import { PickLayer } from "@/components/files/PickLayer";
-import { startAutomationScheduler } from "../lib/automations/scheduler";
-import { startMediaIndexer } from "../lib/files/categories";
+// Planificateur d'automatisations et indexeur média : chargés à la demande
+// (import dynamique) pendant un temps mort, pour qu'aucun de leurs modules
+// ne soit analysé par le moteur JS avant l'affichage du premier écran.
+
 import { SplashOverlay, SPLASH_ART_SRCSET } from "../components/brand/SplashOverlay";
 import { OnboardingOverlay } from "../components/onboarding/OnboardingOverlay";
 import { markStartupSignal, onStartupReady } from "../lib/startup/boot";
@@ -386,18 +388,26 @@ function SystemIntegrationBridge() {
     // d'automatisations. Aucune permission n'est demandée ici (les
     // notifications sont demandées à l'usage réel).
     let stop: (() => void) | undefined;
+    let cancelled = false;
     const start = () => {
       // Index persistant des catégories : chargé depuis le disque, puis
       // rafraîchi de façon incrémentale. Les catégories s'ouvrent ensuite
       // instantanément, sans jamais relancer d'analyse.
-      void startMediaIndexer();
-      stop = startAutomationScheduler();
+      void import("../lib/files/categories").then((m) => {
+        if (!cancelled) void m.startMediaIndexer();
+      });
+      void import("../lib/automations/scheduler").then((m) => {
+        if (cancelled) return;
+        stop = m.startAutomationScheduler();
+      });
     };
+
     const canIdle = typeof window !== "undefined" && "requestIdleCallback" in window;
     const idle: number = canIdle
       ? window.requestIdleCallback(start, { timeout: 1500 })
       : window.setTimeout(start, 300);
     return () => {
+      cancelled = true;
       if (canIdle) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
       stop?.();
