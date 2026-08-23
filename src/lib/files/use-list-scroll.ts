@@ -10,22 +10,35 @@
  * - au retour, la position est restituée AVANT le premier rendu peint —
  *   aucun saut visible, aucune animation, aucun rechargement ;
  * - la position est ensuite oubliée : on ne restaure jamais la position
- *   d'un dossier visité plus tôt dans la session.
+ *   d'un dossier visité plus tôt dans la session ;
+ * - à la PREMIÈRE arrivée sur un écran (on revient dans le gestionnaire
+ *   après être passé par une autre section), rien n'est restauré : la
+ *   liste démarre en haut, comme sur une application Android native.
+ *
+ * Point délicat corrigé ici : entre le changement de niveau et la
+ * restauration, la liste est momentanément vide, le document rétrécit et
+ * le navigateur émet un événement `scroll` à 0. Sans garde, cette valeur
+ * écrasait la position mémorisée et le Retour ramenait en haut de liste.
+ * L'enregistrement est donc suspendu tant que la position cible n'a pas
+ * été rétablie, et la sauvegarde de la liste quittée se fait de façon
+ * synchrone (effet de disposition), avant toute peinture.
  *
  * Le conteneur défilant est la fenêtre pour les écrans normaux, ou
  * l'ancêtre marqué `data-scroll-root` pour les couches superposées (mode
- * sélection). La restauration est réappliquée pendant quelques frames :
- * les listes virtualisées ne connaissent leur hauteur totale qu'après un
- * ou deux rendus.
+ * sélection).
  */
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { saveScrollFor, takeScrollFor } from "./scroll-memory";
+import { forgetScrollFor, saveScrollFor, takeScrollFor } from "./scroll-memory";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-/** Nombre de frames pendant lesquelles la position cible est réappliquée. */
-const SETTLE_FRAMES = 6;
+/**
+ * Durée pendant laquelle la position cible est réappliquée : les listes
+ * virtualisées ne connaissent leur hauteur totale qu'après quelques
+ * rendus (et parfois après la mesure des miniatures).
+ */
+const SETTLE_MS = 700;
 
 function scrollRootFor(): HTMLElement | null {
   if (typeof document === "undefined") return null;
@@ -47,50 +60,92 @@ function applyScroll(root: HTMLElement | null, y: number): void {
  *              n'a de sens qu'à ce moment-là.
  */
 export function useListScrollMemory(key: string, ready: boolean): void {
-  const restoredFor = useRef<string | null>(null);
   const mounted = useRef(false);
+  /** Position à rétablir pour la clé courante (`null` = ne rien toucher). */
+  const target = useRef<number | null>(null);
+  /** Tant que la cible n'est pas atteinte, on n'enregistre rien. */
+  const saving = useRef(true);
+  const settled = useRef(true);
 
-  // Mémorisation continue + sauvegarde au moment de quitter la liste.
-  useEffect(() => {
+  /* Changement de niveau : sauvegarde synchrone de la liste quittée, puis
+     capture immédiate de la position à rétablir. */
+  useIsoLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const root = scrollRootFor();
-    const target: HTMLElement | Window = root ?? window;
-    const onScroll = () => saveScrollFor(key, readScroll(root));
-    target.addEventListener("scroll", onScroll, { passive: true });
+    const first = !mounted.current;
+    mounted.current = true;
+
+    if (first) {
+      /* Première arrivée sur l'écran : aucune restauration (on ne ramène
+         jamais l'utilisateur à une position d'une visite précédente). */
+      forgetScrollFor(key);
+      target.current = null;
+      saving.current = true;
+      settled.current = true;
+    } else {
+      target.current = takeScrollFor(key);
+      saving.current = false;
+      settled.current = false;
+    }
+
+    const scroller: HTMLElement | Window = root ?? window;
+    const onScroll = () => {
+      if (saving.current) saveScrollFor(key, readScroll(root));
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      saveScrollFor(key, readScroll(root));
-      target.removeEventListener("scroll", onScroll);
+      if (saving.current) saveScrollFor(key, readScroll(root));
+      scroller.removeEventListener("scroll", onScroll);
     };
   }, [key]);
 
-  // Restauration synchrone, avant peinture : rien ne clignote.
+  /* Restauration synchrone, avant peinture : rien ne clignote. */
   useIsoLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (!ready || restoredFor.current === key) return;
-    const first = !mounted.current;
-    mounted.current = true;
-    restoredFor.current = key;
+    if (!ready || settled.current) return;
 
     const root = scrollRootFor();
-    const y = takeScrollFor(key);
-    /* Premier affichage de l'écran sans position mémorisée : on ne touche
-       à rien (le routeur ou l'ancrage d'un lien profond restent maîtres).
-       Changement de niveau dans le même écran (ouvrir un dossier) : la
-       nouvelle liste doit impérativement démarrer en haut. */
-    if (first && y <= 0) return;
-
+    const y = target.current ?? 0;
     applyScroll(root, y);
-    /* Listes virtualisées : la hauteur totale peut n'être connue qu'après
-       un ou deux rendus. On réapplique la cible pendant quelques frames,
-       toujours sans animation, puis on s'arrête dès qu'elle est atteinte. */
+
     let frame = 0;
-    let left = SETTLE_FRAMES;
+    const started = Date.now();
+    const finish = () => {
+      cancelAnimationFrame(frame);
+      settled.current = true;
+      saving.current = true;
+      detach();
+    };
+    /* Un geste de l'utilisateur reprend immédiatement la main : on cesse
+       de réappliquer la cible pour ne jamais contrarier le défilement. */
+    const onUser = () => finish();
+    const detach = () => {
+      window.removeEventListener("touchstart", onUser);
+      window.removeEventListener("wheel", onUser);
+      window.removeEventListener("pointerdown", onUser);
+    };
+    window.addEventListener("touchstart", onUser, { passive: true });
+    window.addEventListener("wheel", onUser, { passive: true });
+    window.addEventListener("pointerdown", onUser, { passive: true });
+
     const settle = () => {
-      if (left-- <= 0) return;
-      if (Math.abs(readScroll(root) - y) > 2) applyScroll(root, y);
+      const reached = Math.abs(readScroll(root) - y) <= 2;
+      if (!reached) applyScroll(root, y);
+      if (Date.now() - started >= SETTLE_MS) {
+        finish();
+        return;
+      }
       frame = requestAnimationFrame(settle);
     };
     frame = requestAnimationFrame(settle);
-    return () => cancelAnimationFrame(frame);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      detach();
+      /* L'écran change avant la fin du calage : l'enregistrement doit
+         redevenir possible pour la liste suivante. */
+      settled.current = true;
+      saving.current = true;
+    };
   }, [key, ready]);
 }
