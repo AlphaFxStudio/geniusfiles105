@@ -7,8 +7,7 @@
  */
 export { Accent, GfIconBase, createGfIcon } from "./GfIcon";
 export type { GfIconProps, GfIconComponent } from "./GfIcon";
-export * from "./gf-icons";
-export * from "./gf-actions";
+export * from "./set";
 
 import type { ReactNode } from "react";
 
