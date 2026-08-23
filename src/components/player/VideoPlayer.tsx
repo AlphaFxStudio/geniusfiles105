@@ -18,7 +18,7 @@ import {
   Unlock,
   Volume2,
   VolumeX,
-} from "lucide-react";
+} from "@/components/icons";
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import { useOverlayZClass } from "@/lib/files/overlay-z";
 import { sourceUrlOf, entryKey, absolutePathOf } from "@/lib/viewer/source";

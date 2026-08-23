@@ -1,4 +1,4 @@
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, Home } from "@/components/icons";
 import { useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n";
 import type { PathRef, StorageRoot } from "@/lib/files/types";

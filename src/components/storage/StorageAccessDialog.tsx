@@ -10,7 +10,7 @@
  * réellement besoin de l'accès (`promptStorageAccess()`).
  */
 import { useEffect, useState } from "react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen } from "@/components/icons";
 import { BottomSheet, PrimaryButton } from "@/components/files/BottomSheet";
 import {
   deferStorageAccess,

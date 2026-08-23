@@ -6,7 +6,7 @@
  * principal.
  */
 import { useState } from "react";
-import { PencilLine, RefreshCw } from "lucide-react";
+import { PencilLine, RefreshCw } from "@/components/icons";
 import { BottomSheet, PrimaryButton } from "@/components/files/BottomSheet";
 import type { RenameProposal } from "@/lib/organizer";
 import { useT } from "@/lib/i18n";

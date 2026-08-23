@@ -45,7 +45,7 @@ import {
   ZoomIn,
   ZoomOut,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 

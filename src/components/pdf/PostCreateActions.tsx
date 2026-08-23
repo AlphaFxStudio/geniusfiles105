@@ -15,7 +15,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/errors/humanize";
-import { ExternalLink, Share2, Pencil, FolderInput, Trash2, FileText } from "lucide-react";
+import { ExternalLink, Share2, Pencil, FolderInput, Trash2, FileText } from "@/components/icons";
 import { BottomSheet, PrimaryButton, TextField } from "@/components/files/BottomSheet";
 import { DestinationPicker } from "@/components/files/DestinationPicker";
 import { isAndroidNative, nativePlugin } from "@/lib/native/geniusfiles-native";

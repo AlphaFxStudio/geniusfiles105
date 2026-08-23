@@ -7,8 +7,7 @@
  */
 export { Accent, GfIconBase, createGfIcon } from "./GfIcon";
 export type { GfIconProps, GfIconComponent } from "./GfIcon";
-export * from "./gf-icons";
-export * from "./gf-actions";
+export * from "./set";
 
 import type { ReactNode } from "react";
 
@@ -43,7 +42,7 @@ import {
   GfText,
   GfUsbDrive,
   GfVideo,
-} from "./gf-icons";
+} from "./set";
 
 /** Catégories de fichiers : une silhouette propre par famille, jamais une couleur seule. */
 export const FILE_KIND_ICON = {

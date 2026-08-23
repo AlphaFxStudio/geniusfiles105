@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RotateCcw, ArrowLeft, ExternalLink, ShieldCheck, HardDrive } from "lucide-react";
+import { RotateCcw, ArrowLeft, ExternalLink, ShieldCheck, HardDrive } from "@/components/icons";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
 import { ListSkeleton } from "@/components/ui/states";
 import { emptyActionLabel } from "@/lib/copy/empty-illustrations";

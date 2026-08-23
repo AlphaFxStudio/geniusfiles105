@@ -17,7 +17,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronRight, MessageCircle } from "lucide-react";
+import { ChevronRight, MessageCircle } from "@/components/icons";
 import {
   GfWarning as AlertTriangle,
   GfStaleFile as CalendarClock,

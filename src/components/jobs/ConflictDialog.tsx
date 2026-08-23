@@ -7,7 +7,7 @@
  * rechargement, aucune perte de position).
  */
 import { useSyncExternalStore, useEffect, useState } from "react";
-import { FileWarning } from "lucide-react";
+import { FileWarning } from "@/components/icons";
 import { BottomSheet, PrimaryButton } from "@/components/files/BottomSheet";
 import {
   answerConflict,

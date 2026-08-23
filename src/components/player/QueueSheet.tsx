@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { X, Play } from "lucide-react";
+import { X, Play } from "@/components/icons";
 import type { FileEntry } from "@/lib/files/types";
 import { useThumbnail } from "@/hooks/use-thumbnail";
 import { parseTrackName, fmtTime } from "./format";

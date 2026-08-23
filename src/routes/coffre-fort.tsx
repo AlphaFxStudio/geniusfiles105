@@ -18,7 +18,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useT, t, t as translate } from "@/lib/i18n";
-import { ArrowDownAZ, ArrowLeft, ChevronRight, FolderPlus, Grid3X3, X } from "lucide-react";
+import { ArrowDownAZ, ArrowLeft, ChevronRight, FolderPlus, Grid3X3, X } from "@/components/icons";
 import {
   GfSort as ArrowUpDown,
   GfRecent as Clock,

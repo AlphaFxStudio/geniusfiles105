@@ -6,7 +6,7 @@
  */
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CommitContext } from "./panel-runtime";
-import { RotateCcw, Wand2 } from "lucide-react";
+import { RotateCcw, Wand2 } from "@/components/icons";
 
 import {
   CROP_RATIOS,

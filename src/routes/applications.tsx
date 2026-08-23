@@ -41,7 +41,7 @@ import {
   Trash2,
   User,
   X,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { usePullToRefresh } from "@/lib/gestures/pull-refresh";

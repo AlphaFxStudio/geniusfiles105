@@ -2,7 +2,7 @@
  * Bouton Retour de l'interface. Il délègue au contrôleur unique de
  * navigation : même comportement que le bouton système et le geste.
  */
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components/icons";
 import { useAppBack } from "@/lib/navigation/use-app-back";
 import { useT } from "@/lib/i18n";
 

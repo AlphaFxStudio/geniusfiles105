@@ -15,7 +15,7 @@
  * Fonctionne aussi bien sur la fenêtre (listes de l'application, qui
  * défilent le document) que sur un conteneur donné (lecteurs de documents).
  */
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "@/components/icons";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useT } from "@/lib/i18n";
 

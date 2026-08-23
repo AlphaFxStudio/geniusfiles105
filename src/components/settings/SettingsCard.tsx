@@ -5,7 +5,7 @@
  * contenu animé via la technique `grid-template-rows: 0fr -> 1fr`.
  */
 import { useId, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons";
 
 export function SettingsCard({
   title,

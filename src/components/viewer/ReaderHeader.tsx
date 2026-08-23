@@ -10,7 +10,7 @@
  * - jamais sélectionnable — seul le contenu du document l'est.
  */
 import type { ReactNode } from "react";
-import { ArrowLeft, MoreVertical, Share2 } from "lucide-react";
+import { ArrowLeft, MoreVertical, Share2 } from "@/components/icons";
 import { useT } from "@/lib/i18n";
 
 export function ReaderHeader({

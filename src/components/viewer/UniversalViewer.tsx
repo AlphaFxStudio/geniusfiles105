@@ -46,7 +46,7 @@ import {
   Trash2,
   Volume2,
   X,
-} from "lucide-react";
+} from "@/components/icons";
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import { BACK_PRIORITY, registerBackHandler } from "@/lib/navigation/back-stack";
 import { formatDate, formatSize } from "@/lib/files/format";

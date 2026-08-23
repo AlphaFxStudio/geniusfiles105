@@ -6,7 +6,7 @@
  * obtenir une utilisation supplémentaire. Aucune annonce ne se déclenche
  * sans un appui explicite.
  */
-import { Sparkles, Clock3, PlayCircle, Loader2 } from "lucide-react";
+import { Sparkles, Clock3, PlayCircle, Loader2 } from "@/components/icons";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { useQuota, useRenewalCountdown, useRewardedUse } from "@/lib/quota/useQuota";

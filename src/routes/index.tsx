@@ -27,9 +27,9 @@ import {
   TrendingDown,
   Crop,
   AudioWaveform,
-} from "lucide-react";
+} from "@/components/icons";
 
-import { FileArchive, Package, Zap, Sparkles, Folder } from "lucide-react";
+import { FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
 import {
   GfApps,
   GfAudioEditor,

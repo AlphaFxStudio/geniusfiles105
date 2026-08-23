@@ -10,7 +10,7 @@
  * fait discrètement en arrière-plan.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "@/components/icons";
 import { STORAGE_ICON, type GfIconComponent } from "@/components/icons";
 
 import { getExternalVolumes, subscribeRoots, refreshStorageVolumes } from "@/lib/files/fs";

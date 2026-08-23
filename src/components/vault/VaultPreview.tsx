@@ -7,7 +7,7 @@
  * on native to build a WebView-safe URL for the vault path; on web preview
  * it degrades to a friendly placeholder.
  */
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "@/components/icons";
 import {
   GfDocument as FileText,
   GfFavorite as Star,

@@ -7,7 +7,7 @@
  * ligne ne disparaît jamais tant que le travail n'est pas terminé, et
  * aucune étape ne revient en arrière.
  */
-import { Check, X } from "lucide-react";
+import { Check, X } from "@/components/icons";
 import { useT } from "@/lib/i18n";
 import type { TaskSnapshot } from "@/lib/ai/session";
 

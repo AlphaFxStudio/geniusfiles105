@@ -11,7 +11,7 @@
  * ne peut jamais la cocher.
  */
 import { useMemo, useState } from "react";
-import { ArrowLeft, ShieldCheck, Lock } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Lock } from "@/components/icons";
 import { BottomSheet, PrimaryButton } from "@/components/files/BottomSheet";
 import { FileIcon } from "@/components/files/FileIcon";
 import { UniversalViewer } from "@/components/viewer/UniversalViewer";

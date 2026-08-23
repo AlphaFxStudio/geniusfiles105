@@ -19,7 +19,7 @@
  *   changement d'application ou interruption ne perdent jamais le travail.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Redo2, Save, SquarePen, Undo2 } from "lucide-react";
+import { Redo2, Save, SquarePen, Undo2 } from "@/components/icons";
 import { ReaderHeader, HeaderButton } from "@/components/viewer/ReaderHeader";
 import type { FileEntry, PathRef } from "@/lib/files/types";
 import { absolutePathOf } from "@/lib/viewer/source";

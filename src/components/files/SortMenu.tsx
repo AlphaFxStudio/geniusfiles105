@@ -15,7 +15,7 @@
  * Aucune action « Sélectionner » ni « Actualiser » n'y figure.
  */
 import { useEffect, useState } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Check } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Check } from "@/components/icons";
 import type { SortKey, SortOrder } from "@/lib/files/types";
 import { useT } from "@/lib/i18n";
 

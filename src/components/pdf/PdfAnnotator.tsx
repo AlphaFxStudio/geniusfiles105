@@ -20,7 +20,7 @@
  * addImageToPdf / watermarkPdf.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2, Copy as CopyIcon, RotateCw, Undo2, Redo2 } from "lucide-react";
+import { Trash2, Copy as CopyIcon, RotateCw, Undo2, Redo2 } from "@/components/icons";
 import { loadPdfJs } from "@/lib/pdf/pdfjs";
 import { readBytes } from "@/lib/pdf/native-io";
 import {

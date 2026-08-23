@@ -22,7 +22,7 @@ import {
   type SelectionItem,
 } from "@/lib/files/selection-store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, Clock, X, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Search, Clock, X, SlidersHorizontal, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Spinner } from "@/components/ui/states";

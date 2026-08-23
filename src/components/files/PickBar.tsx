@@ -6,7 +6,7 @@
  * « Annuler » et « Valider » existent. Le bouton « Valider » reste lié à
  * l'action qui a déclenché la sélection.
  */
-import { Check, FolderInput, X } from "lucide-react";
+import { Check, FolderInput, X } from "@/components/icons";
 import { toast } from "sonner";
 
 import { Portal } from "@/components/common/Portal";

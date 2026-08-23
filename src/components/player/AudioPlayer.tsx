@@ -15,7 +15,7 @@ import {
   SkipForward,
   Waves,
   X,
-} from "lucide-react";
+} from "@/components/icons";
 import { VinylDisc } from "./VinylDisc";
 import { QueueSheet } from "./QueueSheet";
 import { fmtTime, parseTrackName } from "./format";

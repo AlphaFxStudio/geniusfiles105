@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { X } from "lucide-react";
+import { X } from "@/components/icons";
 import { Portal } from "@/components/common/Portal";
 import { useInPickLayer } from "@/components/files/pick-layer-context";
 import { BACK_PRIORITY, registerBackHandler } from "@/lib/navigation/back-stack";

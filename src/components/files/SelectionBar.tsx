@@ -1,4 +1,4 @@
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X } from "@/components/icons";
 import {
   GfTransfer as ArrowLeftRight,
   GfSelectAll as CheckCheck,

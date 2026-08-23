@@ -21,7 +21,7 @@ import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
  *   pinned; scrolling is delegated to the browser for maximum smoothness.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minus, Plus, RotateCw, Search, SkipForward, X } from "lucide-react";
+import { Maximize2, Minus, Plus, RotateCw, Search, SkipForward, X } from "@/components/icons";
 import { loadPdfJs, type PdfDoc, type PdfPage, type PdfViewport } from "@/lib/pdf/pdfjs";
 import { getResume, setResume } from "@/lib/viewer/resume";
 import { renderSelectableText, releaseOcr, selectedPageNumber } from "@/lib/pdf/text-layer";

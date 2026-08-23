@@ -11,7 +11,7 @@
  * refuse, l'utilisateur voit la raison exacte.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Boxes, PackageCheck, PackageOpen, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Boxes, PackageCheck, PackageOpen, ShieldAlert } from "@/components/icons";
 import { toast } from "sonner";
 import { BottomSheet, PrimaryButton } from "./BottomSheet";
 import { FileIcon } from "./FileIcon";

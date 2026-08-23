@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info } from "@/components/icons";
 import { BottomSheet, PrimaryButton } from "@/components/files/BottomSheet";
 import type { ConfirmCopy } from "@/lib/copy";
 import { useT } from "@/lib/i18n";
