@@ -158,6 +158,12 @@ function BottomNav({ pathname, keyboardInset = 0 }: { pathname: string; keyboard
             <Link
               key={to}
               to={to}
+              /* Les sections principales ne s'empilent JAMAIS : passer de
+                 l'une à l'autre remplace l'écran courant. Le Retour ne
+                 redéroule donc pas la liste des sections déjà visitées —
+                 il ramène directement à l'Accueil (puis propose de
+                 quitter l'application). */
+              replace
               /* Les quatre destinations sont préchargées dès l'affichage de
                  la barre : passer d'une section à l'autre n'attend plus
                  aucun chargement de module. */
