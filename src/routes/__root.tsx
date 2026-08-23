@@ -412,7 +412,6 @@ function SystemIntegrationBridge() {
       else window.clearTimeout(idle);
       stop?.();
     };
-
   }, []);
   return null;
 }
