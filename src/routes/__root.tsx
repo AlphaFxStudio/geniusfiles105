@@ -17,8 +17,10 @@ import { useSystemIntegration } from "../lib/native/use-system-integration";
 import { StorageAccessDialog } from "../components/storage/StorageAccessDialog";
 import { BackNavigator } from "../components/navigation/BackNavigator";
 import { PickLayer } from "@/components/files/PickLayer";
-import { startAutomationScheduler } from "../lib/automations/scheduler";
-import { startMediaIndexer } from "../lib/files/categories";
+// Planificateur d'automatisations et indexeur média : chargés à la demande
+// (import dynamique) pendant un temps mort, pour qu'aucun de leurs modules
+// ne soit analysé par le moteur JS avant l'affichage du premier écran.
+
 import { SplashOverlay, SPLASH_ART_SRCSET } from "../components/brand/SplashOverlay";
 import { OnboardingOverlay } from "../components/onboarding/OnboardingOverlay";
 import { markStartupSignal, onStartupReady } from "../lib/startup/boot";
