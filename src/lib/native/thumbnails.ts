@@ -130,7 +130,12 @@ function schedule<T>(task: () => Promise<T>): Promise<T> {
         .then(resolve, reject)
         .finally(() => {
           running--;
-          const next = queue.shift();
+          /* Dernier arrivé, premier servi : après un défilement rapide,
+             ce sont les lignes actuellement à l'écran qui ont demandé
+             leur miniature en dernier. Les servir d'abord fait apparaître
+             ce que l'utilisateur regarde, au lieu d'écouler d'abord une
+             file de vignettes déjà sorties de l'écran. */
+          const next = queue.pop();
           if (next) next();
         });
     };
@@ -138,6 +143,7 @@ function schedule<T>(task: () => Promise<T>): Promise<T> {
     else queue.push(run);
   });
 }
+
 
 // Suivi des demandeurs : une miniature dont la ligne a quitté l'écran avant
 // d'être décodée est abandonnée au lieu de monopoliser la file native.

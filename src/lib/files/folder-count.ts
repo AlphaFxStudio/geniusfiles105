@@ -37,7 +37,10 @@ function schedule<T>(task: () => Promise<T>): Promise<T> {
         .then(resolve, reject)
         .finally(() => {
           running--;
-          queue.shift()?.();
+          // Dernier arrivé, premier servi : les lignes visibles après un
+          // défilement rapide obtiennent leur compte avant celles déjà
+          // sorties de l'écran.
+          queue.pop()?.();
         });
     };
     if (running < MAX_CONCURRENT) run();
@@ -49,8 +52,21 @@ function keyOf(parent: PathRef, name: string): string {
   return `${parent.rootId}:${[...parent.segments, name].join("/")}`;
 }
 
+/**
+ * Compte connu sans aucun appel natif : quand le sous-dossier est déjà
+ * dans le cache de dossiers (préchauffé ou visité), son nombre d'éléments
+ * est déductible immédiatement.
+ */
+function peekCount(parent: PathRef, name: string): number | null {
+  if (!isAndroidNative()) return null;
+  const cached = peekCachedEntries(`${toAbsolutePath(parent)}/${name}`);
+  return cached ? cached.length : null;
+}
+
 async function resolveCount(parent: PathRef, name: string): Promise<number | null> {
   if (isAndroidNative()) {
+    const known = peekCount(parent, name);
+    if (known != null) return known;
     const p = nativePlugin();
     if (!p?.statDirectory) return null;
     try {
@@ -63,6 +79,7 @@ async function resolveCount(parent: PathRef, name: string): Promise<number | nul
   const node = mockResolve({ rootId: parent.rootId, segments: [...parent.segments, name] });
   return node ? (node.children?.length ?? 0) : null;
 }
+
 
 /** Invalidate cached counts (after a mutation inside `parent`). */
 export function invalidateFolderCounts(parent?: PathRef) {
