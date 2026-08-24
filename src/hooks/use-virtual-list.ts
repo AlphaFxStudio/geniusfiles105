@@ -96,6 +96,26 @@ export function useWindowVirtualList(opts: WindowVirtualOptions) {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => measureRef.current());
     };
+    /* Pendant le défilement, la mesure coûte un calcul de mise en page
+       forcé à chaque frame — sur une longue liste, c'est la principale
+       source de saccade. On la limite donc à quelques fois par seconde,
+       puis une dernière fois à l'arrêt du doigt : la correction reste
+       imperceptible, le défilement redevient parfaitement fluide. */
+    let lastAt = 0;
+    let settle: ReturnType<typeof setTimeout> | null = null;
+    const measureWhileScrolling = () => {
+      const now = Date.now();
+      if (now - lastAt > 200) {
+        lastAt = now;
+        measure();
+      }
+      if (settle) clearTimeout(settle);
+      settle = setTimeout(() => {
+        settle = null;
+        lastAt = Date.now();
+        measure();
+      }, 140);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -103,22 +123,24 @@ export function useWindowVirtualList(opts: WindowVirtualOptions) {
     if (document.body) ro.observe(document.body);
     window.addEventListener("resize", measure);
     /* Filet de sécurité : toute dérive résiduelle (image chargée plus
-       haut, en-tête collant qui se replie…) est corrigée dès la frame
-       suivante pendant le défilement, sans jamais laisser de vide. */
-    window.addEventListener("scroll", measure, { passive: true });
+       haut, en-tête collant qui se replie…) est corrigée pendant le
+       défilement, sans jamais laisser de vide. */
+    window.addEventListener("scroll", measureWhileScrolling, { passive: true });
     const root = el.closest<HTMLElement>(`[${SCROLL_ROOT_ATTR}]`);
     if (root) {
       ro.observe(root);
-      root.addEventListener("scroll", measure, { passive: true });
+      root.addEventListener("scroll", measureWhileScrolling, { passive: true });
     }
     return () => {
       cancelAnimationFrame(frame);
+      if (settle) clearTimeout(settle);
       ro.disconnect();
       window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure);
-      if (root) root.removeEventListener("scroll", measure);
+      window.removeEventListener("scroll", measureWhileScrolling);
+      if (root) root.removeEventListener("scroll", measureWhileScrolling);
     };
   }, [enabled, scrollEl]);
+
 
   return { enabled, parentRef, virtualizer, scrollMargin };
 }
