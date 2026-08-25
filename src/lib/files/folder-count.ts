@@ -16,7 +16,6 @@ import { peekCachedEntries } from "@/lib/native/dir-cache";
 import { mockResolve, toAbsolutePath } from "./fs";
 import type { PathRef } from "./types";
 
-
 const cache = new Map<string, number>();
 const inflight = new Map<string, Promise<number | null>>();
 
@@ -81,7 +80,6 @@ async function resolveCount(parent: PathRef, name: string): Promise<number | nul
   const node = mockResolve({ rootId: parent.rootId, segments: [...parent.segments, name] });
   return node ? (node.children?.length ?? 0) : null;
 }
-
 
 /** Invalidate cached counts (after a mutation inside `parent`). */
 export function invalidateFolderCounts(parent?: PathRef) {

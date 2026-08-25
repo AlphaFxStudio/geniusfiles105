@@ -141,6 +141,5 @@ export function useWindowVirtualList(opts: WindowVirtualOptions) {
     };
   }, [enabled, scrollEl]);
 
-
   return { enabled, parentRef, virtualizer, scrollMargin };
 }

@@ -144,7 +144,6 @@ function schedule<T>(task: () => Promise<T>): Promise<T> {
   });
 }
 
-
 // Suivi des demandeurs : une miniature dont la ligne a quitté l'écran avant
 // d'être décodée est abandonnée au lieu de monopoliser la file native.
 const wanted = new Map<string, number>();
