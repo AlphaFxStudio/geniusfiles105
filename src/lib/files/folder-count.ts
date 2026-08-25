@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 
 import { isAndroidNative, nativePlugin } from "@/lib/native/geniusfiles-native";
+import { peekCachedEntries } from "@/lib/native/dir-cache";
 import { mockResolve, toAbsolutePath } from "./fs";
 import type { PathRef } from "./types";
 
@@ -80,7 +81,6 @@ async function resolveCount(parent: PathRef, name: string): Promise<number | nul
   return node ? (node.children?.length ?? 0) : null;
 }
 
-
 /** Invalidate cached counts (after a mutation inside `parent`). */
 export function invalidateFolderCounts(parent?: PathRef) {
   if (!parent) {
@@ -97,15 +97,26 @@ export function invalidateFolderCounts(parent?: PathRef) {
  */
 export function useFolderCount(parent: PathRef | null | undefined, name: string, enabled: boolean) {
   const key = parent && enabled ? keyOf(parent, name) : null;
-  const [count, setCount] = useState<number | null>(() => (key ? (cache.get(key) ?? null) : null));
+  /* Premier rendu : compte déjà connu (cache mémoire ou dossier déjà lu)
+     affiché immédiatement, sans le moindre aller-retour natif. */
+  const [count, setCount] = useState<number | null>(() => {
+    if (!key || !parent) return null;
+    const known = cache.get(key);
+    if (known != null) return known;
+    const peeked = peekCount(parent, name);
+    if (peeked != null) cache.set(key, peeked);
+    return peeked;
+  });
 
   useEffect(() => {
     if (!key || !parent) return;
-    const cached = cache.get(key);
+    const cached = cache.get(key) ?? peekCount(parent, name);
     if (cached != null) {
+      cache.set(key, cached);
       setCount(cached);
       return;
     }
+
     let alive = true;
     let pending = inflight.get(key);
     if (!pending) {
