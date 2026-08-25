@@ -12,8 +12,10 @@
 import { useEffect, useState } from "react";
 
 import { isAndroidNative, nativePlugin } from "@/lib/native/geniusfiles-native";
+import { peekCachedEntries } from "@/lib/native/dir-cache";
 import { mockResolve, toAbsolutePath } from "./fs";
 import type { PathRef } from "./types";
+
 
 const cache = new Map<string, number>();
 const inflight = new Map<string, Promise<number | null>>();
