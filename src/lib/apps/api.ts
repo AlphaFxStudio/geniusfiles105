@@ -101,7 +101,16 @@ export async function listInstalledApps(opts?: {
 }): Promise<AppListResult> {
   hydrateAppsCache();
   const cached = appsCache;
-  if (!opts?.force && cached && Date.now() - cached.at < APPS_CACHE_TTL) return cached.result;
+  const wantsIcons = opts?.includeIcons ?? true;
+  const cacheHasIcons = cached?.result.apps.some((app) => !!app.iconBase64) ?? false;
+  if (
+    !opts?.force &&
+    cached &&
+    Date.now() - cached.at < APPS_CACHE_TTL &&
+    (!wantsIcons || cacheHasIcons || cached.result.apps.length === 0)
+  ) {
+    return cached.result;
+  }
 
   if (!isAndroidNative()) {
     // Aucune simulation : hors Android, la liste réelle est inaccessible.
@@ -133,7 +142,15 @@ export async function listInstalledApps(opts?: {
       });
       if (!res) return cached?.result ?? unavailableApps("no-plugin");
       const result: AppListResult = {
-        apps: res.apps,
+        apps:
+          wantsIcons || !cached
+            ? res.apps
+            : res.apps.map((app) => ({
+                ...app,
+                iconBase64: cached.result.apps.find(
+                  (known) => known.packageName === app.packageName,
+                )?.iconBase64,
+              })),
         statsSupported: res.statsSupported,
         usageAvailable: res.usageAvailable,
         usable: true,
