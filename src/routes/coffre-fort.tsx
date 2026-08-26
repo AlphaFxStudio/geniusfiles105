@@ -366,7 +366,7 @@ function SetupWizard({ onDone }: { onDone: () => void }) {
               }`}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/12 text-primary">
-                <Fingerprint className="h-4 w-4" />
+                <Fingerprint className="h-[18px] w-[18px]" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-medium">{t("vault.biometric.label")}</p>
@@ -500,7 +500,7 @@ function StepPill({
       }`}
     >
       <span
-        className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold ${
+        className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[9px] font-semibold ${
           active || done ? "bg-primary text-primary-foreground" : "bg-secondary"
         }`}
       >
@@ -533,7 +533,7 @@ function MethodOption({
       }`}
     >
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/12 text-primary">
-        <Icon className="h-4 w-4" />
+        <Icon className="h-[18px] w-[18px]" />
       </span>
       <div>
         <p className="text-[13px] font-medium">{label}</p>
@@ -713,7 +713,7 @@ function LockScreen({ onUnlocked, onReset }: { onUnlocked: () => void; onReset: 
             onClick={tryBiometric}
             className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground active:scale-95"
           >
-            <Fingerprint className="h-4 w-4" /> {t("vault.lock.useBiometric")}
+            <Fingerprint className="h-[18px] w-[18px]" /> {t("vault.lock.useBiometric")}
           </button>
         ) : null}
 
@@ -1067,7 +1067,7 @@ function VaultBrowser() {
             </button>
             {path.map((f) => (
               <span key={f.id} className="flex shrink-0 items-center gap-0.5">
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                <ChevronRight className="h-4 w-4 shrink-0 opacity-60" />
                 <button
                   type="button"
                   onClick={() => setFolderId(f.id)}
@@ -1083,7 +1083,7 @@ function VaultBrowser() {
         {/* Recherche + tri */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               inputMode="search"
@@ -1103,7 +1103,7 @@ function VaultBrowser() {
                 aria-label={t("cleaner.trash.clearSearch.aria")}
                 className="gf-press absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
               </button>
             ) : null}
           </div>
@@ -1418,7 +1418,7 @@ function FilterChip({
           : "border-border bg-surface text-muted-foreground hover:text-foreground"
       }`}
     >
-      <Icon className="h-4 w-4" /> {label}
+      <Icon className="h-[18px] w-[18px]" /> {label}
     </button>
   );
 }
@@ -1480,7 +1480,7 @@ function SortMenu({
                 sort.key === o.key ? "text-primary" : "text-foreground"
               }`}
             >
-              <o.icon className="h-4 w-4" /> {o.label}
+              <o.icon className="h-[18px] w-[18px]" /> {o.label}
               {sort.key === o.key ? (
                 <span className="ml-auto text-[10px] uppercase tracking-wide">{sort.order}</span>
               ) : null}
@@ -1516,7 +1516,7 @@ function FolderTile({
             onClick={onRename}
             className="gf-press flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
           >
-            <SquarePen className="h-4 w-4" />
+            <SquarePen className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
@@ -1524,7 +1524,7 @@ function FolderTile({
             onClick={onDelete}
             className="gf-press flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-[18px] w-[18px]" />
           </button>
         </div>
       </div>
@@ -1589,7 +1589,7 @@ function ItemRow({
           <p className="truncate text-[14px] font-medium">
             {item.name}
             {item.favorite ? (
-              <Star className="ml-1 inline h-3.5 w-3.5 text-amber-400" fill="currentColor" />
+              <Star className="ml-1 inline h-4 w-4 text-amber-400" fill="currentColor" />
             ) : null}
           </p>
           <p className="mt-0.5 text-[12px] text-muted-foreground">
@@ -1640,14 +1640,14 @@ function SelectionBar({
             onClick={onRestore}
             className="gf-press inline-flex h-11 items-center gap-1.5 rounded-2xl border border-border bg-surface px-3.5 text-[13px] font-medium text-foreground"
           >
-            <Undo2 className="h-4 w-4" /> {t("action.restore")}
+            <Undo2 className="h-[18px] w-[18px]" /> {t("action.restore")}
           </button>
           <button
             type="button"
             onClick={onDelete}
             className="gf-press inline-flex h-11 items-center gap-1.5 rounded-2xl border border-destructive/30 bg-destructive/10 px-3.5 text-[13px] font-medium text-destructive"
           >
-            <Trash2 className="h-4 w-4" /> {t("action.delete")}
+            <Trash2 className="h-[18px] w-[18px]" /> {t("action.delete")}
           </button>
         </div>
       </div>
@@ -1733,7 +1733,7 @@ function ActionRow({
           danger ? "bg-red-500/12 text-red-400" : "bg-primary/12 text-primary"
         }`}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-[18px] w-[18px]" />
       </span>
       <span>{label}</span>
     </button>
@@ -1764,7 +1764,7 @@ function RestorePrompt({
             className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left hover:!border-primary/40"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/12 text-primary">
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="h-[18px] w-[18px]" />
             </span>
             <div>
               <p className="text-[13px] font-medium">{t("vault.restore.original.label")}</p>
@@ -1779,7 +1779,7 @@ function RestorePrompt({
             className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 text-left hover:!border-primary/40"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/12 text-primary">
-              <Folder className="h-4 w-4" />
+              <Folder className="h-[18px] w-[18px]" />
             </span>
             <div>
               <p className="text-[13px] font-medium">{t("vault.restore.choose.label")}</p>

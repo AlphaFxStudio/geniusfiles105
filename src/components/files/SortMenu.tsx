@@ -80,7 +80,7 @@ export function SortMenu({
             }`}
           >
             <span className="truncate">{labels[k]}</span>
-            {active ? <Check className="h-4 w-4 shrink-0 text-primary" /> : null}
+            {active ? <Check className="h-[18px] w-[18px] shrink-0 text-primary" /> : null}
           </button>
         );
       })}
@@ -92,13 +92,13 @@ export function SortMenu({
         <OrderButton
           active={draftOrder === "asc"}
           onClick={() => setDraftOrder("asc")}
-          icon={<ArrowUpAZ className="h-4 w-4" />}
+          icon={<ArrowUpAZ className="h-[18px] w-[18px]" />}
           label={t("files.sort.ascending")}
         />
         <OrderButton
           active={draftOrder === "desc"}
           onClick={() => setDraftOrder("desc")}
-          icon={<ArrowDownAZ className="h-4 w-4" />}
+          icon={<ArrowDownAZ className="h-[18px] w-[18px]" />}
           label={t("files.sort.descending")}
         />
       </div>

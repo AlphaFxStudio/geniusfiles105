@@ -1330,7 +1330,7 @@ export function AudioEditor({
           aria-label={t("media.editor.aria.back")}
           className="rounded-xl border border-border bg-surface p-2 text-muted-foreground"
         >
-          <X className="h-4 w-4" />
+          <X className="h-[18px] w-[18px]" />
         </button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14px] font-semibold text-foreground">{entry.name}</p>
@@ -1359,7 +1359,7 @@ export function AudioEditor({
           onClick={openSave}
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-[13px] font-semibold text-primary-foreground active:scale-95"
         >
-          <Save className="h-4 w-4" /> {t("action.save")}
+          <Save className="h-[18px] w-[18px]" /> {t("action.save")}
         </button>
       </header>
 
@@ -1405,7 +1405,7 @@ export function AudioEditor({
         />
         {busy ? (
           <span className="pointer-events-none absolute right-6 top-4 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" /> {t("media.editor.processingBadge")}
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("media.editor.processingBadge")}
           </span>
         ) : null}
       </div>
@@ -1673,7 +1673,7 @@ export function AudioEditor({
                 type="checkbox"
                 checked={exportMono}
                 onChange={(e) => setExportMono(e.target.checked)}
-                className="h-4 w-4 accent-primary"
+                className="h-[18px] w-[18px] accent-primary"
               />
               {t("media.editor.exportMonoLabel")}
             </label>
@@ -1825,7 +1825,7 @@ function IconBtn({
         small ? "p-1.5" : "p-2.5"
       }`}
     >
-      <Icon className={small ? "h-3.5 w-3.5" : "h-5 w-5"} />
+      <Icon className={small ? "h-4 w-4" : "h-5 w-5"} />
     </button>
   );
 }
@@ -1965,7 +1965,7 @@ function EffectActions({
   return (
     <Row>
       <Action variant="primary" onClick={() => onApply(build())}>
-        <Check className="mr-1 inline h-4 w-4" /> {label ?? t("action.apply")}
+        <Check className="mr-1 inline h-[18px] w-[18px]" /> {label ?? t("action.apply")}
       </Action>
     </Row>
   );
@@ -2074,7 +2074,7 @@ function ToolPanel(props: {
           aria-label={t("media.editor.aria.closeTool")}
           className="rounded-lg p-1 text-muted-foreground"
         >
-          <X className="h-4 w-4" />
+          <X className="h-[18px] w-[18px]" />
         </button>
       </div>
 
@@ -2204,7 +2204,7 @@ function ToolPanel(props: {
               type="checkbox"
               checked={keepPitch}
               onChange={(e) => setKeepPitch(e.target.checked)}
-              className="h-4 w-4 accent-primary"
+              className="h-[18px] w-[18px] accent-primary"
             />
             {t("media.editor.tool.keepPitchLabel")}
           </label>
@@ -2768,7 +2768,7 @@ function ToolPanel(props: {
               variant="primary"
               onClick={() => props.onInsertSound(soundId, soundSeconds, soundGain, false)}
             >
-              <Check className="mr-1 inline h-4 w-4" /> {t("media.editor.tool.insert")}
+              <Check className="mr-1 inline h-[18px] w-[18px]" /> {t("media.editor.tool.insert")}
             </Action>
             {selection && selection.end - selection.start > 0.005 ? (
               <Action onClick={() => props.onInsertSound(soundId, soundSeconds, soundGain, true)}>
@@ -2856,7 +2856,7 @@ function ToolPanel(props: {
               type="checkbox"
               checked={censorMode === "over"}
               onChange={(e) => setCensorMode(e.target.checked ? "over" : "replace")}
-              className="h-4 w-4 accent-primary"
+              className="h-[18px] w-[18px] accent-primary"
             />
             {t("media.editor.tool.keepVoiceInBackground")}
           </label>
@@ -2872,7 +2872,8 @@ function ToolPanel(props: {
                 })
               }
             >
-              <Check className="mr-1 inline h-4 w-4" /> {t("media.editor.tool.censorSelection")}
+              <Check className="mr-1 inline h-[18px] w-[18px]" />{" "}
+              {t("media.editor.tool.censorSelection")}
             </Action>
           </Row>
         </div>

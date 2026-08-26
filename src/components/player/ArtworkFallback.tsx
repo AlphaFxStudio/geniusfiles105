@@ -27,7 +27,7 @@ export function ArtworkFallback({ title, className = "" }: { title: string; clas
       >
         {initial}
       </span>
-      <Music2 className="absolute bottom-3 right-3 h-4 w-4 text-media-muted" />
+      <Music2 className="absolute bottom-3 right-3 h-[18px] w-[18px] text-media-muted" />
     </div>
   );
 }

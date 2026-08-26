@@ -53,7 +53,7 @@ export function DeniedState({ onGrant }: { onGrant?: () => void }) {
       action={
         onGrant ? (
           <button onClick={onGrant} className="btn-primary gf-press">
-            <ShieldCheck className="h-4 w-4" />
+            <ShieldCheck className="h-[18px] w-[18px]" />
             {emptyActionLabel("allow")}
           </button>
         ) : null
@@ -70,7 +70,7 @@ export function UnavailableState({ onRetry }: { onRetry?: () => void }) {
       action={
         onRetry ? (
           <button onClick={onRetry} className="btn-secondary gf-press">
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-[18px] w-[18px]" />
             {emptyActionLabel("retry")}
           </button>
         ) : null
@@ -87,7 +87,7 @@ export function NetworkErrorState({ onRetry }: { onRetry?: () => void }) {
       action={
         onRetry ? (
           <button onClick={onRetry} className="btn-secondary gf-press">
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-[18px] w-[18px]" />
             {emptyActionLabel("retry")}
           </button>
         ) : null
@@ -112,7 +112,7 @@ export function FileNotFoundState({
       action={
         onBack ? (
           <button onClick={onBack} className="btn-secondary gf-press">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-[18px] w-[18px]" />
             {emptyActionLabel("back")}
           </button>
         ) : null
@@ -136,7 +136,7 @@ export function OpenFailedState({
       action={
         onOpenWith ? (
           <button onClick={onOpenWith} className="btn-primary gf-press">
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-[18px] w-[18px]" />
             {emptyActionLabel("openWith")}
           </button>
         ) : null
@@ -157,7 +157,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry: ()
       description={message}
       action={
         <button onClick={onRetry} className="btn-secondary gf-press">
-          <RotateCcw className="h-4 w-4" />
+          <RotateCcw className="h-[18px] w-[18px]" />
           {emptyActionLabel("retry")}
         </button>
       }
@@ -184,13 +184,13 @@ export function LowSpaceState({
           <div className="flex flex-wrap items-center justify-center gap-2">
             {onFreeSpace ? (
               <button onClick={onFreeSpace} className="btn-primary gf-press">
-                <HardDrive className="h-4 w-4" />
+                <HardDrive className="h-[18px] w-[18px]" />
                 {emptyActionLabel("freeSpace")}
               </button>
             ) : null}
             {onRetry ? (
               <button onClick={onRetry} className="btn-secondary gf-press">
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-[18px] w-[18px]" />
                 {emptyActionLabel("retry")}
               </button>
             ) : null}
@@ -216,7 +216,7 @@ export function UnknownErrorState({
       action={
         onRetry ? (
           <button onClick={onRetry} className="btn-primary gf-press">
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-[18px] w-[18px]" />
             {emptyActionLabel("retry")}
           </button>
         ) : null
@@ -244,13 +244,13 @@ export function OperationFailedState({
           <div className="flex flex-wrap items-center justify-center gap-2">
             {onRetry ? (
               <button onClick={onRetry} className="btn-primary gf-press">
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-[18px] w-[18px]" />
                 {emptyActionLabel("retry")}
               </button>
             ) : null}
             {onBack ? (
               <button onClick={onBack} className="btn-secondary gf-press">
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-[18px] w-[18px]" />
                 {emptyActionLabel("back")}
               </button>
             ) : null}

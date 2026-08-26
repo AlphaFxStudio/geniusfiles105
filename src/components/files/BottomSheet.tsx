@@ -190,7 +190,7 @@ export function BottomSheet({
                 aria-label={tr("action.close")}
                 className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-all duration-150 active:scale-95 hover:bg-surface-2 hover:text-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
               </button>
             </div>
           ) : (
@@ -202,7 +202,7 @@ export function BottomSheet({
               aria-label={tr("action.close")}
               className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-muted-foreground transition-all duration-150 active:scale-95 hover:bg-surface-3 hover:text-foreground"
             >
-              <X className="h-4 w-4" />
+              <X className="h-[18px] w-[18px]" />
             </button>
           )}
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">

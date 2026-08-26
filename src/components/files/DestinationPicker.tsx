@@ -67,7 +67,7 @@ export function DestinationPicker({
             {t("action.cancel")}
           </PrimaryButton>
           <PrimaryButton variant="ghost" onClick={() => setNewFolderOpen(true)} disabled={!path}>
-            <FolderPlus className="mr-1 h-4 w-4" /> {t("files.destination.new")}
+            <FolderPlus className="mr-1 h-[18px] w-[18px]" /> {t("files.destination.new")}
           </PrimaryButton>
           <PrimaryButton onClick={() => path && onConfirm(path)} disabled={!path}>
             {t("files.destination.choose")}
@@ -85,7 +85,7 @@ export function DestinationPicker({
         </button>
         {path ? (
           <>
-            <ChevronRight className="h-3 w-3 shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
             <button
               type="button"
               onClick={() => setPath({ rootId: path.rootId, segments: [] })}
@@ -95,7 +95,7 @@ export function DestinationPicker({
             </button>
             {path.segments.map((seg, i) => (
               <span key={i} className="flex items-center gap-1">
-                <ChevronRight className="h-3 w-3 shrink-0" />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                 <button
                   type="button"
                   onClick={() =>
@@ -124,10 +124,10 @@ export function DestinationPicker({
                     className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-secondary/40"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
-                      <HardDrive className="h-4 w-4" />
+                      <HardDrive className="h-[18px] w-[18px]" />
                     </span>
                     <span className="flex-1 truncate text-[13px] font-medium">{r.label}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/70" />
+                    <ChevronRight className="h-[18px] w-[18px] text-muted-foreground/70" />
                   </button>
                 </li>
               ))}
@@ -153,7 +153,7 @@ export function DestinationPicker({
                 >
                   <FileIcon kind="folder" />
                   <span className="flex-1 truncate text-[13px]">{f.name}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/70" />
+                  <ChevronRight className="h-[18px] w-[18px] text-muted-foreground/70" />
                 </button>
               </li>
             ))}
@@ -162,7 +162,7 @@ export function DestinationPicker({
       </div>
 
       <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-        <CheckSquare className="h-3 w-3" /> {t("files.destination.hint")}
+        <CheckSquare className="h-3.5 w-3.5" /> {t("files.destination.hint")}
       </p>
 
       <NamePrompt

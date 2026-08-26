@@ -383,7 +383,7 @@ function TrashPage() {
               aria-label={t("cleaner.trash.search.aria")}
               aria-pressed={searchOpen}
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-[18px] w-[18px]" />
             </button>
             {sortedItems.length > 0 ? (
               <button
@@ -392,7 +392,11 @@ function TrashPage() {
                 className="gf-press flex h-10 w-10 items-center justify-center rounded-2xl text-muted-foreground hover:bg-secondary hover:text-foreground"
                 aria-label={allSelected ? t("action.deselectAll") : t("action.selectAll")}
               >
-                {allSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                {allSelected ? (
+                  <CheckSquare className="h-[18px] w-[18px]" />
+                ) : (
+                  <Square className="h-[18px] w-[18px]" />
+                )}
               </button>
             ) : null}
             <div ref={menuRef} className="relative">
@@ -404,7 +408,7 @@ function TrashPage() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-[18px] w-[18px]" />
               </button>
               {menuOpen ? (
                 <div
@@ -427,9 +431,9 @@ function TrashPage() {
                       className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] hover:bg-secondary/60"
                     >
                       {sortKey === key ? (
-                        <Check className="h-4 w-4 text-primary" />
+                        <Check className="h-[18px] w-[18px] text-primary" />
                       ) : (
-                        <ArrowDownAZ className="h-4 w-4 text-muted-foreground/60" />
+                        <ArrowDownAZ className="h-[18px] w-[18px] text-muted-foreground/60" />
                       )}
                       <span className="truncate">{sortLabel(t)[key]}</span>
                     </button>
@@ -443,7 +447,7 @@ function TrashPage() {
                     }}
                     className="flex w-full items-center gap-2 border-t border-border/60 px-3 py-2.5 text-left text-[13px] hover:bg-secondary/60"
                   >
-                    <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                    <RefreshCw className="h-[18px] w-[18px] text-muted-foreground" />
                     {t("files.rafraichir")}
                   </button>
                   <button
@@ -456,7 +460,7 @@ function TrashPage() {
                     }}
                     className="flex w-full items-center gap-2 border-t border-border/60 px-3 py-2.5 text-left text-[13px] text-destructive hover:bg-destructive/10 disabled:opacity-50"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-[18px] w-[18px]" />
                     {t("cleaner.trash.emptyAction")}
                   </button>
                 </div>
@@ -469,7 +473,7 @@ function TrashPage() {
       {searchOpen ? (
         <div className="sticky top-[calc(env(safe-area-inset-top)+4.6rem)] z-20 -mx-4 border-b border-border/60 bg-background px-4 pb-2.5">
           <div className="flex items-center gap-2 rounded-2xl bg-surface-2 px-3">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
             <input
               ref={searchRef}
               value={query}
@@ -484,7 +488,7 @@ function TrashPage() {
                 aria-label={t("cleaner.trash.clearSearch.aria")}
                 className="gf-press shrink-0 text-muted-foreground hover:text-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
               </button>
             ) : null}
           </div>
@@ -507,7 +511,7 @@ function TrashPage() {
         ) : (
           <>
             <div className="mb-2 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
-              <ArrowUpDown className="h-3 w-3 shrink-0" />
+              <ArrowUpDown className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{sortLabel(t)[sortKey]}</span>
               <span className="ml-auto shrink-0">
                 {t("cleaner.trash.sortedCount", { count: sortedItems.length })}
@@ -548,7 +552,7 @@ function TrashPage() {
                           ) : null}
                         </div>
                         <p className="gf-row-meta truncate">
-                          <FolderOpen className="mr-1 inline h-3 w-3" />
+                          <FolderOpen className="mr-1 inline h-3.5 w-3.5" />
                           {parent}
                         </p>
                         <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
@@ -557,7 +561,7 @@ function TrashPage() {
                           <span>{formatDate(it.deletedAt)}</span>
                           <span aria-hidden>·</span>
                           <span className="inline-flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="h-3.5 w-3.5" />
                             {formatCountdown(t, it.msUntilPurge)}
                           </span>
                         </p>
@@ -574,9 +578,9 @@ function TrashPage() {
                         className="gf-press flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground"
                       >
                         {isSel ? (
-                          <CheckSquare className="h-4 w-4" />
+                          <CheckSquare className="h-[18px] w-[18px]" />
                         ) : (
-                          <Square className="h-4 w-4" />
+                          <Square className="h-[18px] w-[18px]" />
                         )}
                       </button>
                       {canPreview ? (
@@ -586,7 +590,7 @@ function TrashPage() {
                           aria-label={t("cleaner.trash.item.previewAria", { name: it.name })}
                           className="gf-press flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-[18px] w-[18px]" />
                         </button>
                       ) : null}
                     </div>
@@ -608,7 +612,7 @@ function TrashPage() {
                 onClick={() => setSelected(new Set())}
                 className="gf-press flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-semibold text-muted-foreground hover:bg-secondary"
               >
-                <X className="h-4 w-4" />
+                <X className="h-[18px] w-[18px]" />
                 {t("action.cancel")}
               </button>
               <button
@@ -617,7 +621,7 @@ function TrashPage() {
                 disabled={busy}
                 className="gf-press flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-2xl bg-primary text-[11px] font-semibold text-primary-foreground shadow-soft disabled:opacity-50"
               >
-                <Undo2 className="h-4 w-4" />
+                <Undo2 className="h-[18px] w-[18px]" />
                 Restaurer
               </button>
               <button
@@ -626,7 +630,7 @@ function TrashPage() {
                 disabled={busy}
                 className="gf-press flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-2xl bg-destructive text-[11px] font-semibold text-destructive-foreground shadow-soft disabled:opacity-50"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-[18px] w-[18px]" />
                 {t("automations.card.delete")}
               </button>
             </div>
@@ -719,7 +723,7 @@ function TrashPage() {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-primary">
-                <Undo2 className="h-4 w-4" />
+                <Undo2 className="h-[18px] w-[18px]" />
               </span>
               <div>
                 <p className="text-sm font-semibold">{t("cleaner.trash.restoreOutcome.title")}</p>

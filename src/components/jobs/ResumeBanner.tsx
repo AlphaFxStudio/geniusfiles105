@@ -51,7 +51,7 @@ export function ResumeBanner() {
       aria-live="polite"
     >
       <div className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
-        <AlertTriangle className="h-4 w-4 text-primary" />
+        <AlertTriangle className="h-[18px] w-[18px] text-primary" />
         {t("home.resume.title")}
       </div>
       <ul className="space-y-2">
@@ -90,7 +90,7 @@ export function ResumeBanner() {
                   disabled={busy === job.id}
                   className="flex h-8 items-center gap-1 rounded-full bg-primary px-2.5 text-[11px] font-medium text-primary-foreground disabled:opacity-60"
                 >
-                  <PlayCircle className="h-3.5 w-3.5" />
+                  <PlayCircle className="h-4 w-4" />
                   {busy === job.id ? "…" : t("home.resume.resume")}
                 </button>
                 <button
@@ -99,7 +99,7 @@ export function ResumeBanner() {
                   onClick={() => dismissJob(job.id)}
                   className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </li>

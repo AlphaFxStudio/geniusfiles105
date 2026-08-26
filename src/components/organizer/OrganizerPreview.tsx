@@ -25,8 +25,7 @@ export function OrganizerPreview({ preview }: { preview: OrgPreview }) {
       {preview.createdFolders.length > 0 ? (
         <div className="rounded-xl border border-border bg-secondary/40 p-3">
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
-            <FolderPlus className="h-3.5 w-3.5 text-primary" />{" "}
-            {t("organize.preview.createdFolders")}
+            <FolderPlus className="h-4 w-4 text-primary" /> {t("organize.preview.createdFolders")}
           </div>
           <ul className="mt-1.5 space-y-0.5 text-[11px] text-muted-foreground">
             {preview.createdFolders.map((p) => (
@@ -45,21 +44,21 @@ export function OrganizerPreview({ preview }: { preview: OrgPreview }) {
           <div className="space-y-1 text-[12px]">
             {n.renames.map((r) => (
               <div key={r.from} className="flex items-center gap-2">
-                <PencilLine className="h-3.5 w-3.5 text-primary" />
+                <PencilLine className="h-4 w-4 text-primary" />
                 <span className="truncate line-through opacity-60">{r.from}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="truncate font-medium">{r.to}</span>
               </div>
             ))}
             {n.removals.map((name) => (
               <div key={"r" + name} className="flex items-center gap-2 text-muted-foreground">
-                <MinusCircle className="h-3.5 w-3.5 text-red-400" />
+                <MinusCircle className="h-4 w-4 text-red-400" />
                 <span className="truncate">{name}</span>
               </div>
             ))}
             {n.additions.map((name) => (
               <div key={"a" + name} className="flex items-center gap-2">
-                <PlusCircle className="h-3.5 w-3.5 text-emerald-400" />
+                <PlusCircle className="h-4 w-4 text-emerald-400" />
                 <span className="truncate">{name}</span>
               </div>
             ))}

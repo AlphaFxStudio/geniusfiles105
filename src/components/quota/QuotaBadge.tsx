@@ -50,12 +50,12 @@ export function QuotaBadge({
           empty ? "text-muted-foreground" : "text-foreground"
         }`}
       >
-        <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2.2} />
+        <Sparkles className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />
         {empty ? t("quota.none") : t("quota.remaining", { count: quota.remaining })}
       </span>
 
       <span className="flex items-center gap-1 text-[11.5px] text-muted-foreground">
-        <Clock3 className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+        <Clock3 className="h-4 w-4 shrink-0" strokeWidth={2} />
         {quota.pendingRenewal
           ? t("quota.pending")
           : t("quota.renewal", { time: formatDelay(countdown) })}
@@ -69,9 +69,9 @@ export function QuotaBadge({
           className="ml-auto flex items-center gap-1.5 rounded-xl bg-primary/12 px-2.5 py-1.5 text-[12px] font-semibold text-primary transition-transform active:scale-95 disabled:opacity-60"
         >
           {watching ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
+            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} />
           ) : (
-            <PlayCircle className="h-3.5 w-3.5" strokeWidth={2.2} />
+            <PlayCircle className="h-4 w-4" strokeWidth={2.2} />
           )}
           {watching ? t("quota.watching") : t("quota.watch")}
         </button>

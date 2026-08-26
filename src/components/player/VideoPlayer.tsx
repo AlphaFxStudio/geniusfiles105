@@ -894,12 +894,12 @@ export function VideoPlayer({
             <div className="flex items-center gap-3 rounded-full bg-[color-mix(in_oklab,var(--pl-scrim)_70%,transparent)] px-4 py-2 backdrop-blur-md">
               {overlay.kind === "volume" ? (
                 overlay.value === 0 ? (
-                  <VolumeX className="h-4 w-4" />
+                  <VolumeX className="h-[18px] w-[18px]" />
                 ) : (
-                  <Volume2 className="h-4 w-4" />
+                  <Volume2 className="h-[18px] w-[18px]" />
                 )
               ) : (
-                <Sun className="h-4 w-4" />
+                <Sun className="h-[18px] w-[18px]" />
               )}
               <div className="h-1.5 w-44 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--pl-fg)_20%,transparent)]">
                 <div
@@ -1043,7 +1043,7 @@ export function VideoPlayer({
                 />
               </div>
               <div
-                className="pointer-events-none absolute h-4 w-4 rounded-full bg-primary shadow-lg"
+                className="pointer-events-none absolute h-[18px] w-[18px] rounded-full bg-primary shadow-lg"
                 style={{
                   left: `${progress * 100}%`,
                   transform: `translateX(-50%) scale(${scrub != null ? 1.35 : 1})`,

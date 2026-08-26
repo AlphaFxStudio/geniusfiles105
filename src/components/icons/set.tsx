@@ -1,9 +1,11 @@
 /**
- * GeniusFiles — système d'icônes unique (famille Phosphor, graisse « bold »).
+ * GeniusFiles — système d'icônes unique (famille Phosphor, graisse « regular »).
  *
- * Une seule famille pour TOUTE l'application : formes géométriques nettes,
- * silhouettes compactes, traits épais, même grille 24×24 et même rythme
- * optique partout. Aucun mélange, aucune icône héritée.
+ * UN SEUL langage visuel pour TOUTE l'application :
+ * · grille 24×24, trait constant, terminaisons et angles identiques ;
+ * · style outline propre, sobre, sans détail superflu ;
+ * · variante pleine réservée aux rares états actifs qui en tirent un bénéfice ;
+ * · couleur héritée du contexte (`currentColor`), donc thème-compatible.
  *
  * · Les noms `Gf*` restent l'API métier de l'application.
  * · Les noms historiques (Home, Search, Trash2…) sont conservés comme alias
@@ -19,7 +21,7 @@ type PhComponent = (props: PhIconProps) => ReactElement;
 type PhWeight = NonNullable<PhIconProps["weight"]>;
 
 /** Fabrique : fige la graisse et la taille par défaut du système. */
-function icon(Base: PhComponent, weight: PhWeight = "bold"): GfIconComponent {
+function icon(Base: PhComponent, weight: PhWeight = "regular"): GfIconComponent {
   const Wrapped = ({ size = 24, strokeWidth: _ignored, ...rest }: GfIconProps): ReactElement => {
     const Component = Base as unknown as ComponentType<Record<string, unknown>>;
     return <Component size={size} weight={weight} {...rest} />;
@@ -28,7 +30,7 @@ function icon(Base: PhComponent, weight: PhWeight = "bold"): GfIconComponent {
   return Wrapped;
 }
 
-/** Variante pleine : utilisée pour les états actifs et les vignettes. */
+/** Variante pleine : réservée aux états actifs et aux pastilles. */
 function solid(Base: PhComponent): GfIconComponent {
   return icon(Base, "fill");
 }

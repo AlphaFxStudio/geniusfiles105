@@ -120,7 +120,7 @@ export function SelectionToolbar({
           onClick={clear}
           className="flex h-10 w-10 items-center justify-center rounded-xl text-popover-foreground/60 active:bg-foreground/10"
         >
-          <X className="h-4 w-4" />
+          <X className="h-[18px] w-[18px]" />
         </button>
       </div>
     </div>
@@ -142,7 +142,7 @@ function Action({
       onClick={onClick}
       className="flex h-10 items-center gap-1.5 rounded-xl px-3 text-[12.5px] font-medium active:bg-foreground/10"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-[18px] w-[18px]" />
       <span className="whitespace-nowrap">{label}</span>
     </button>
   );

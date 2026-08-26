@@ -424,7 +424,7 @@ function AssistantPage() {
                 aria-label={t("assistant.input.stop")}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-transform duration-100 active:scale-90"
               >
-                <Square className="h-3.5 w-3.5 fill-current" />
+                <Square className="h-4 w-4 fill-current" />
               </button>
             ) : (
               <button
@@ -477,7 +477,7 @@ function Welcome() {
 
       <div className="mt-3.5 w-full rounded-3xl bg-primary/8 px-4 py-3 text-left [@media(max-height:620px)]:mt-2.5 [@media(max-height:620px)]:py-2.5">
         <p className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />
+          <ShieldCheck className="h-[18px] w-[18px] shrink-0 text-primary" strokeWidth={2.2} />
           {t("assistant.welcome.privacyTitle")}
         </p>
         {/* Detail de confidentialite replie sur les ecrans courts : quota,
@@ -523,9 +523,9 @@ function CopyButton({ text, align }: { text: string; align: "start" | "end" }) {
         className="flex h-8 items-center gap-1.5 rounded-full px-2 text-[11.5px] font-medium text-muted-foreground transition-colors duration-150 hover:bg-surface-2 hover:text-foreground active:scale-95"
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={2.6} />
+          <Check className="h-4 w-4 text-primary" strokeWidth={2.6} />
         ) : (
-          <Copy className="h-3.5 w-3.5" strokeWidth={2.1} />
+          <Copy className="h-4 w-4" strokeWidth={2.1} />
         )}
         <span>{copied ? t("assistant.message.copied") : t("assistant.message.copy")}</span>
       </button>

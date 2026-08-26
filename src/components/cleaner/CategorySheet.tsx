@@ -116,7 +116,7 @@ export function CategorySheet({
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-surface-3 text-muted-foreground"
               aria-label={t("cleaner.sheet.lockedAria")}
             >
-              <Lock className="h-3 w-3" />
+              <Lock className="h-3.5 w-3.5" />
             </span>
           ) : (
             <button
@@ -181,7 +181,7 @@ export function CategorySheet({
           <>
             <PrimaryButton variant="ghost" onClick={onClose}>
               <span className="flex items-center gap-1">
-                <ArrowLeft className="h-3.5 w-3.5" /> {t("action.back")}
+                <ArrowLeft className="h-4 w-4" /> {t("action.back")}
               </span>
             </PrimaryButton>
             <PrimaryButton
@@ -204,7 +204,7 @@ export function CategorySheet({
               : "border border-warning/30 bg-warning/10 text-foreground"
           }`}
         >
-          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <span>
             {category.safety === "safe" ? t("cleaner.sheet.safe") : t("cleaner.sheet.review")}
           </span>

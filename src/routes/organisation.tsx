@@ -314,7 +314,7 @@ function OrganizationPage() {
             disabled={!report}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[12px] font-medium disabled:opacity-50"
           >
-            <PencilLine className="h-3.5 w-3.5" /> {t("organize.action.smartRename")}
+            <PencilLine className="h-4 w-4" /> {t("organize.action.smartRename")}
           </button>
         </div>
       </section>
@@ -326,7 +326,7 @@ function OrganizationPage() {
       />
       {scanning && !recs ? (
         <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-3 text-[12px] text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("organize.scanning")}
+          <Loader2 className="h-[18px] w-[18px] animate-spin" /> {t("organize.scanning")}
         </div>
       ) : recs && recs.length > 0 ? (
         <div className="space-y-2">
@@ -357,7 +357,7 @@ function OrganizationPage() {
           <div className="grid grid-cols-2 gap-2">
             {distribution.map((d) => (
               <div key={d.id} className="card-surface flex items-center gap-2 p-3">
-                <Layers className="h-4 w-4 text-primary" />
+                <Layers className="h-[18px] w-[18px] text-primary" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12px] font-medium">{d.label}</p>
                   <p className="text-[11px] text-muted-foreground">
@@ -383,9 +383,9 @@ function OrganizationPage() {
             onClick={() => openCollectionSheet(c)}
             className="card-surface flex items-center gap-2 p-3 text-left transition-transform active:scale-[0.97]"
           >
-            <ListTree className="h-4 w-4 text-primary" />
+            <ListTree className="h-[18px] w-[18px] text-primary" />
             <span className="flex-1 text-[12px] font-medium">{c.label}</span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         ))}
       </div>
@@ -411,13 +411,14 @@ function OrganizationPage() {
         {previewFor ? (
           <>
             <div className="mb-3 flex items-start gap-2 rounded-xl border border-border bg-secondary/40 p-3 text-[12px]">
-              <Info className="h-4 w-4 shrink-0 text-primary" />
+              <Info className="h-[18px] w-[18px] shrink-0 text-primary" />
               <span>{previewFor.reason}</span>
             </div>
             <PlanSummary plan={previewFor.plan} />
             {previewFor.loading ? (
               <div className="mt-3 flex items-center gap-2 text-[12px] text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> {t("organize.preview.computing")}
+                <Loader2 className="h-[18px] w-[18px] animate-spin" />{" "}
+                {t("organize.preview.computing")}
               </div>
             ) : previewFor.preview ? (
               <div className="mt-3">
@@ -489,7 +490,8 @@ function OrganizationPage() {
       >
         {collectionLoading ? (
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> {t("organize.collection.searching")}
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />{" "}
+            {t("organize.collection.searching")}
           </div>
         ) : collectionMatch ? (
           collectionMatch.entries.length === 0 ? (
@@ -551,7 +553,7 @@ function RecommendationCard({
       className="card-surface flex w-full items-start gap-3 p-3 text-left transition-transform active:scale-[0.99]"
     >
       <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
-        <Icon className="h-4 w-4" />
+        <Icon className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium">{rec.title}</p>

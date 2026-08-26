@@ -354,7 +354,7 @@ export function PdfAnnotator({
               className="rounded-md border border-border p-1 disabled:opacity-40"
               title={t("action.cancel")}
             >
-              <Undo2 className="h-3.5 w-3.5" />
+              <Undo2 className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -363,7 +363,7 @@ export function PdfAnnotator({
               className="rounded-md border border-border p-1 disabled:opacity-40"
               title={t("media.editor.aria.redo")}
             >
-              <Redo2 className="h-3.5 w-3.5" />
+              <Redo2 className="h-4 w-4" />
             </button>
             <span className="ml-2 text-[10px] text-muted-foreground">
               Zoom {Math.round(zoom * 100)}%
@@ -569,12 +569,12 @@ function ElementView({
           {/* Resize handle (bottom-right) */}
           <div
             onPointerDown={onBeginResize}
-            className="absolute -bottom-1.5 -right-1.5 h-3 w-3 cursor-se-resize rounded-sm border border-primary bg-paper"
+            className="absolute -bottom-1.5 -right-1.5 h-3.5 w-3.5 cursor-se-resize rounded-sm border border-primary bg-paper"
           />
           {/* Rotate handle (top-center) */}
           <div
             onPointerDown={onBeginRotate}
-            className="absolute -top-6 left-1/2 flex h-4 w-4 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-primary bg-paper"
+            className="absolute -top-6 left-1/2 flex h-[18px] w-[18px] -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-primary bg-paper"
           >
             <RotateCw className="h-2.5 w-2.5 text-primary" />
           </div>
@@ -616,14 +616,14 @@ function ElementInspector({
             className="rounded border border-border p-1 text-[11px]"
             title={t("pdf.tool.duplicate.label")}
           >
-            <CopyIcon className="h-3 w-3" />
+            <CopyIcon className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onDelete}
             className="rounded border border-destructive/40 p-1 text-destructive"
             title={t("automations.card.delete")}
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

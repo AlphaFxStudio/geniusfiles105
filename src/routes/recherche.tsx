@@ -804,7 +804,7 @@ export function SearchPage() {
         <>
           <div className="mt-2">
             <label className="relative block">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 inputMode="search"
@@ -831,7 +831,7 @@ export function SearchPage() {
                     aria-label={t("cleaner.trash.clearSearch.aria")}
                     className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-[18px] w-[18px]" />
                   </button>
                 ) : null}
                 <button
@@ -844,7 +844,7 @@ export function SearchPage() {
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <SlidersHorizontal className="h-[18px] w-[18px]" />
                   {activeFilterCount > 0 ? (
                     <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
                       {activeFilterCount}
@@ -1109,7 +1109,7 @@ function RecentSearches({
               onClick={onClear}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" />
               {t("search.recents.clearAll")}
             </button>
           ) : undefined
@@ -1131,7 +1131,7 @@ function RecentSearches({
                 onClick={() => onPick(h.query)}
                 className="flex flex-1 items-center gap-3 px-4 py-3 text-left"
               >
-                <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Clock className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-sm">{h.query}</span>
               </button>
               <button
@@ -1140,7 +1140,7 @@ function RecentSearches({
                 onClick={() => onRemove(h.query)}
                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           ))}

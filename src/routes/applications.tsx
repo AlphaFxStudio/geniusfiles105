@@ -304,7 +304,7 @@ function AppsPage() {
             onClick={() => setQuery("")}
             className="gf-press absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
           >
-            <X className="h-4 w-4" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         ) : null}
       </div>
@@ -312,10 +312,10 @@ function AppsPage() {
       <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="flex min-w-0 gap-1.5 overflow-x-auto scrollbar-hidden">
           <Chip active={filter === "user"} onClick={() => setFilter("user")}>
-            <User className="h-4 w-4" /> {t("organize.apps.filter.user")}
+            <User className="h-[18px] w-[18px]" /> {t("organize.apps.filter.user")}
           </Chip>
           <Chip active={filter === "system"} onClick={() => setFilter("system")}>
-            <Cpu className="h-4 w-4" /> {t("organize.apps.filter.system")}
+            <Cpu className="h-[18px] w-[18px]" /> {t("organize.apps.filter.system")}
           </Chip>
           <Chip active={filter === "all"} onClick={() => setFilter("all")}>
             {t("organize.apps.filter.all")}
@@ -328,7 +328,7 @@ function AppsPage() {
             className="gf-press flex h-10 items-center gap-1.5 rounded-2xl bg-surface-2 px-3 text-[12.5px] font-medium text-muted-foreground"
             aria-label={`Trier : ${sortLabel(t)[sort]}`}
           >
-            <ArrowUpDown className="h-4 w-4" />
+            <ArrowUpDown className="h-[18px] w-[18px]" />
             <span className="hidden xs:inline">{sortLabel(t)[sort]}</span>
           </button>
           <button
@@ -338,9 +338,9 @@ function AppsPage() {
             aria-label={layout === "list" ? "Affichage en grille" : "Affichage en liste"}
           >
             {layout === "list" ? (
-              <Grid3x3 className="h-4 w-4" />
+              <Grid3x3 className="h-[18px] w-[18px]" />
             ) : (
-              <LayoutList className="h-4 w-4" />
+              <LayoutList className="h-[18px] w-[18px]" />
             )}
           </button>
         </div>
@@ -478,7 +478,7 @@ function UsageAccessGate({
         onClick={onRecheck}
         className="gf-press mt-2 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl text-[12.5px] font-medium text-muted-foreground hover:text-foreground"
       >
-        <RefreshCw className="h-4 w-4" /> {t("organize.apps.usage.recheck")}
+        <RefreshCw className="h-[18px] w-[18px]" /> {t("organize.apps.usage.recheck")}
       </button>
     </div>
   );
@@ -531,7 +531,7 @@ function AppRow({ app, onOpen }: { app: InstalledApp; onOpen: () => void }) {
           {app.versionName ? ` · v${app.versionName}` : ""}
         </p>
       </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <ChevronRight className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
     </button>
   );
 }
@@ -607,7 +607,7 @@ function StatsBlock({
 
       <div className="mt-3.5 flex items-center gap-2 rounded-2xl bg-surface-2 px-3 py-2.5 text-[12px] leading-snug text-muted-foreground">
         <Shield
-          className={`h-4 w-4 shrink-0 ${usageAvailable ? "text-primary" : "text-muted-foreground"}`}
+          className={`h-[18px] w-[18px] shrink-0 ${usageAvailable ? "text-primary" : "text-muted-foreground"}`}
         />
         <span className="min-w-0">
           {usageAvailable
@@ -635,7 +635,7 @@ function RecommendationsBlock({
       {stats.reclaimableBytes > 0 ? (
         <div className="card-surface flex items-start gap-2 p-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-[18px] w-[18px]" />
           </span>
           <div>
             <p className="text-sm font-medium">
@@ -923,7 +923,7 @@ function AppDetailsSheet({
       {showPermissions ? (
         <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
           <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" /> {t("organize.apps.permissions.title")}
+            <Shield className="h-4 w-4" /> {t("organize.apps.permissions.title")}
           </div>
           {permissions === null ? (
             <p className="text-[11px] text-muted-foreground">
@@ -937,7 +937,7 @@ function AppDetailsSheet({
             <ul className="space-y-0.5 text-[11px]">
               {permissions.granted.map((p) => (
                 <li key={p} className="truncate">
-                  <Eye className="mr-1 inline h-3 w-3 text-primary" />
+                  <Eye className="mr-1 inline h-3.5 w-3.5 text-primary" />
                   {p.replace("android.permission.", "")}
                 </li>
               ))}
@@ -956,7 +956,7 @@ function AppDetailsSheet({
       {showStorage ? (
         <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-3">
           <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            <Package className="h-3.5 w-3.5" /> {t("organize.apps.storage.title")}
+            <Package className="h-4 w-4" /> {t("organize.apps.storage.title")}
           </div>
           {storage === null ? (
             <p className="text-[11px] text-muted-foreground">
@@ -988,14 +988,14 @@ function AppDetailsSheet({
         <div className="mt-3">
           <PrimaryButton variant="danger" onClick={handleUninstall}>
             <span className="inline-flex items-center gap-1.5">
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-[18px] w-[18px]" />
               {t("organize.apps.uninstall")}
             </span>
           </PrimaryButton>
         </div>
       ) : (
         <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-border bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground">
-          <Ban className="h-3.5 w-3.5" />
+          <Ban className="h-4 w-4" />
           {t("organize.apps.systemNotice")}
         </div>
       )}
@@ -1031,7 +1031,7 @@ function ActionBtn({
       disabled={disabled}
       className="flex items-center gap-2 rounded-xl border border-border bg-secondary/60 px-3 py-2 text-[12px] font-medium disabled:opacity-50"
     >
-      <Icon className="h-4 w-4 text-primary" />
+      <Icon className="h-[18px] w-[18px] text-primary" />
       {label}
     </button>
   );

@@ -26,7 +26,7 @@ export function InlineSearchField({
   return (
     <div className="mb-2 mt-2">
       <label className="relative block">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           inputMode="search"
@@ -47,7 +47,7 @@ export function InlineSearchField({
           aria-label={t("viewer.document.closeSearch")}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
         >
-          <X className="h-4 w-4" />
+          <X className="h-[18px] w-[18px]" />
         </button>
       </label>
     </div>

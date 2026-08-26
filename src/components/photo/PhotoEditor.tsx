@@ -757,7 +757,7 @@ export function PhotoEditor({
                   </Chip>
                   <Chip active onClick={commitCrop}>
                     <span className="flex items-center gap-1">
-                      <Check className="h-3.5 w-3.5" /> {t("photo.crop.apply")}
+                      <Check className="h-4 w-4" /> {t("photo.crop.apply")}
                     </span>
                   </Chip>
                 </div>
@@ -820,7 +820,7 @@ export function PhotoEditor({
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   <Chip onClick={runAuto}>
                     <span className="flex items-center gap-1">
-                      <Wand2 className="h-3.5 w-3.5" /> {t("photo.extras.autoEnhance")}
+                      <Wand2 className="h-4 w-4" /> {t("photo.extras.autoEnhance")}
                     </span>
                   </Chip>
                   <Chip

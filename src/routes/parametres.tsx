@@ -310,7 +310,7 @@ function ThemePicker({
               active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground"
             }`}
           >
-            <o.icon className="h-3.5 w-3.5" />
+            <o.icon className="h-4 w-4" />
             {o.label}
           </button>
         );
@@ -365,7 +365,7 @@ function LanguagePicker({
               {LOCALE_FLAGS[code]}
             </span>
             <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-            {active ? <Check className="h-4 w-4 shrink-0" /> : null}
+            {active ? <Check className="h-[18px] w-[18px] shrink-0" /> : null}
           </button>
         );
       })}

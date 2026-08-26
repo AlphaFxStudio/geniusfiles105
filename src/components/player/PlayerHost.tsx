@@ -75,9 +75,9 @@ function MiniPlayer() {
           aria-label={s.playing ? t("media.player.aria.pause") : t("media.player.aria.play")}
         >
           {s.playing ? (
-            <Pause className="h-4 w-4" fill="currentColor" />
+            <Pause className="h-[18px] w-[18px]" fill="currentColor" />
           ) : (
-            <Play className="ml-0.5 h-4 w-4" fill="currentColor" />
+            <Play className="ml-0.5 h-[18px] w-[18px]" fill="currentColor" />
           )}
         </span>
         <span
@@ -89,7 +89,7 @@ function MiniPlayer() {
           role="button"
           aria-label={t("media.player.aria.next")}
         >
-          <SkipForward className="h-4 w-4" />
+          <SkipForward className="h-[18px] w-[18px]" />
         </span>
         <span
           className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground active:scale-95"
@@ -100,7 +100,7 @@ function MiniPlayer() {
           role="button"
           aria-label={t("media.player.aria.stop")}
         >
-          <X className="h-4 w-4" />
+          <X className="h-[18px] w-[18px]" />
         </span>
         <span
           aria-hidden

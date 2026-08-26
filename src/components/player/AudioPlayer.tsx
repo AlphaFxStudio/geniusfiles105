@@ -253,7 +253,7 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
             }}
           />
           <div
-            className="absolute h-4 w-4 -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_8px_-1px_color-mix(in_oklab,var(--primary)_60%,transparent)] ring-4 ring-background"
+            className="absolute h-[18px] w-[18px] -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_8px_-1px_color-mix(in_oklab,var(--primary)_60%,transparent)] ring-4 ring-background"
             style={{
               left: `${progress * 100}%`,
               transform: `translateX(-50%) scale(${scrub != null ? 1.25 : 1})`,
@@ -320,16 +320,16 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.75rem)" }}
       >
         <SecondaryButton label={t("media.player.aria.rewind10")} onClick={() => skip(-10)}>
-          <Rewind className="h-4 w-4" />
+          <Rewind className="h-[18px] w-[18px]" />
           10s
         </SecondaryButton>
         <SecondaryButton label={t("media.player.aria.queue")} onClick={() => setQueueOpen(true)}>
-          <ListMusic className="h-4 w-4" />
+          <ListMusic className="h-[18px] w-[18px]" />
           {t("media.player.queueLabel")}
         </SecondaryButton>
         <SecondaryButton label={t("media.player.aria.forward10")} onClick={() => skip(10)}>
           10s
-          <FastForward className="h-4 w-4" />
+          <FastForward className="h-[18px] w-[18px]" />
         </SecondaryButton>
         <SecondaryButton
           label={t("media.player.aria.editAudio")}
@@ -343,7 +343,7 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
           }}
           disabled={!canEdit}
         >
-          <Waves className="h-4 w-4" />
+          <Waves className="h-[18px] w-[18px]" />
           {t("media.player.editLabel")}
         </SecondaryButton>
       </div>
