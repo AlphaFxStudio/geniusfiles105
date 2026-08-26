@@ -194,11 +194,11 @@ function ActionRow({
       }`}
     >
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-          danger ? "bg-red-500/12 text-red-400" : "bg-secondary/60 text-muted-foreground"
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+          danger ? "bg-red-500/12 text-red-400" : "bg-secondary/70 text-foreground/80"
         }`}
       >
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+        <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </button>

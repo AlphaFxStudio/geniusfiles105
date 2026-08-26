@@ -12,8 +12,8 @@
  *   pour que chaque écran pointe vers la même famille sans exception.
  */
 import type { ComponentType, ReactElement } from "react";
-import * as Ph from "./phosphor";
-import type { PhIconProps } from "./phosphor";
+import * as Ph from "./hugeicons";
+import type { PhIconProps } from "./hugeicons";
 
 import type { GfIconComponent, GfIconProps } from "./GfIcon";
 
