@@ -467,7 +467,7 @@ function OpenZone({
       {children}
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
+        className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
       >
         {entry.isDirectory ? (
           <ChevronRight className="h-2.5 w-2.5" strokeWidth={3} />

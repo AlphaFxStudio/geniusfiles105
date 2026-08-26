@@ -111,7 +111,7 @@ function HistoryPage() {
             }
             className="flex items-center gap-1 rounded-lg border border-red-500/30 px-2 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-500/10"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
             {tr("automations.history.page.clear")}
           </button>
         ) : null}
@@ -172,27 +172,27 @@ function StatusIcon({ status, tr }: { status: ExecutionStatus; tr: TFunction }) 
   if (status === "ok")
     return (
       <CheckCircle2
-        className="h-4 w-4 text-emerald-500"
+        className="h-[18px] w-[18px] text-emerald-500"
         aria-label={tr("automations.history.page.status.okAria")}
       />
     );
   if (status === "partial")
     return (
       <AlertTriangle
-        className="h-4 w-4 text-amber-500"
+        className="h-[18px] w-[18px] text-amber-500"
         aria-label={tr("automations.history.page.status.partialAria")}
       />
     );
   if (status === "failed")
     return (
       <XCircle
-        className="h-4 w-4 text-red-500"
+        className="h-[18px] w-[18px] text-red-500"
         aria-label={tr("automations.history.page.status.failedAria")}
       />
     );
   return (
     <Loader2
-      className="h-4 w-4 text-primary"
+      className="h-[18px] w-[18px] text-primary"
       aria-label={tr("automations.history.page.status.simulatedAria")}
     />
   );
@@ -229,7 +229,7 @@ function HistoryRow({ record, tr }: { record: ExecutionRecord; tr: TFunction }) 
           </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3.5 w-3.5" />
               {formatDateValue(record.startedAt, {
                 dateStyle: "short",
                 timeStyle: "short",

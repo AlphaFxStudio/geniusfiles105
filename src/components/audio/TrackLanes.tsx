@@ -504,12 +504,12 @@ export function TrackLanes({
                           : "border-border text-muted-foreground"
                       }`}
                     >
-                      <Crown className="h-3 w-3" />
+                      <Crown className="h-3.5 w-3.5" />
                     </button>
                     <label className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] text-foreground">
                       <input
                         type="checkbox"
-                        className="h-3.5 w-3.5 accent-primary"
+                        className="h-4 w-4 accent-primary"
                         checked={!isMaster && syncTargets.includes(r.id)}
                         disabled={isMaster}
                         onChange={() => onToggleSyncTarget(r.id)}
@@ -554,9 +554,9 @@ export function TrackLanes({
               className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground active:scale-95 disabled:opacity-60"
             >
               {syncing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
+                <RefreshCw className="h-4 w-4" />
               )}
               {syncing
                 ? t("media.editor.syncing")
@@ -599,7 +599,7 @@ function LaneBtn({
         on ? "border-primary bg-primary-softer text-primary" : "border-border text-muted-foreground"
       }`}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -622,7 +622,7 @@ function SmallAction({
       }}
       className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg border border-border px-2 py-1 text-[11px] text-foreground active:scale-95"
     >
-      <Icon className="h-3.5 w-3.5" /> {label}
+      <Icon className="h-4 w-4" /> {label}
     </button>
   );
 }

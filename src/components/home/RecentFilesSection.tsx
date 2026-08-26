@@ -72,7 +72,7 @@ export function RecentFilesSection() {
           onClick={() => navigate({ to: "/fichiers-recents" })}
           className="inline-flex min-h-7 items-center gap-1 rounded-full px-2 text-[12px] font-medium text-primary transition-colors active:bg-primary/10"
         >
-          {t("home.recent.viewMore")} <ArrowRight className="h-3.5 w-3.5" />
+          {t("home.recent.viewMore")} <ArrowRight className="h-4 w-4" />
         </button>
       </div>
 

@@ -103,7 +103,7 @@ export function ErrorPanel({
       action={
         onRetry ? (
           <button type="button" onClick={onRetry} className="btn-secondary gf-press">
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-[18px] w-[18px]" />
             {t("action.retry")}
           </button>
         ) : null

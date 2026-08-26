@@ -30,7 +30,7 @@ export function ReaderActionBar({ tools }: { tools: ReaderTool[] }) {
                   : "bg-reader-header-foreground/10 text-reader-header-foreground"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
               <span className="whitespace-nowrap">{t.label}</span>
               {t.value ? (
                 <span className="whitespace-nowrap text-[11px] text-reader-header-foreground/60">

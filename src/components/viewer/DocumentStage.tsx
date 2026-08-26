@@ -173,7 +173,7 @@ export function DocumentStage({
     <div className="relative flex h-full w-full flex-col">
       {searchOpen ? (
         <div className="flex shrink-0 select-none items-center gap-2 border-b border-border bg-reader-header px-3 py-2">
-          <Search className="h-4 w-4 shrink-0 text-reader-header-foreground/70" />
+          <Search className="h-[18px] w-[18px] shrink-0 text-reader-header-foreground/70" />
           <input
             autoFocus
             value={query}
@@ -193,7 +193,7 @@ export function DocumentStage({
             className="rounded-full p-1 text-reader-header-foreground/80 active:scale-95"
             aria-label={t("viewer.document.previous")}
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
@@ -201,7 +201,7 @@ export function DocumentStage({
             className="rounded-full p-1 text-reader-header-foreground/80 active:scale-95"
             aria-label={t("viewer.document.next")}
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-[18px] w-[18px]" />
           </button>
           <button
             type="button"
@@ -209,7 +209,7 @@ export function DocumentStage({
             className="rounded-full p-1 text-reader-header-foreground/80 active:scale-95"
             aria-label={t("viewer.document.closeSearch")}
           >
-            <X className="h-4 w-4" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
       ) : null}

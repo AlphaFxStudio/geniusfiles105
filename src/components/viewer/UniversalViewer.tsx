@@ -791,7 +791,7 @@ function VideoStage({ src, resumeKey }: { src: string; resumeKey: string }) {
         onClick={(e) => e.stopPropagation()}
       >
         <label className="flex items-center gap-1 rounded-full px-1.5 py-0.5">
-          <Gauge className="h-3.5 w-3.5 text-media-muted" />
+          <Gauge className="h-4 w-4 text-media-muted" />
           <select
             value={rate}
             onChange={(e) => setRate(parseFloat(e.target.value))}
@@ -807,7 +807,7 @@ function VideoStage({ src, resumeKey }: { src: string; resumeKey: string }) {
         </label>
         {tracks.length ? (
           <label className="flex items-center gap-1 rounded-full px-1.5 py-0.5">
-            <Subtitles className="h-3.5 w-3.5 text-media-muted" />
+            <Subtitles className="h-4 w-4 text-media-muted" />
             <select
               value={activeSubtitle ?? ""}
               onChange={(e) => setSubtitle(e.target.value || null)}
@@ -826,7 +826,7 @@ function VideoStage({ src, resumeKey }: { src: string; resumeKey: string }) {
           </label>
         ) : null}
         <ChipButton onClick={togglePip} active={pip} label={t("viewer.media.pip")}>
-          <PictureInPicture2 className="h-3.5 w-3.5" />
+          <PictureInPicture2 className="h-4 w-4" />
         </ChipButton>
       </div>
     </div>
@@ -1019,17 +1019,17 @@ function AudioStage({
           active={loop}
           label={t("viewer.media.repeat")}
         >
-          <Repeat className="h-3.5 w-3.5" /> {t("viewer.media.loop")}
+          <Repeat className="h-4 w-4" /> {t("viewer.media.loop")}
         </ChipButton>
         <ChipButton
           onClick={() => setShuffle((v) => !v)}
           active={shuffle}
           label={t("viewer.media.shuffle")}
         >
-          <Shuffle className="h-3.5 w-3.5" /> {t("viewer.media.shuffle")}
+          <Shuffle className="h-4 w-4" /> {t("viewer.media.shuffle")}
         </ChipButton>
         <label className="flex items-center gap-1 rounded-full bg-media-foreground/10 px-2 py-1 text-media-foreground/80">
-          <Gauge className="h-3.5 w-3.5" />
+          <Gauge className="h-4 w-4" />
           <select
             value={rate}
             onChange={(e) => setRate(parseFloat(e.target.value))}
@@ -1044,7 +1044,7 @@ function AudioStage({
           </select>
         </label>
         <label className="flex items-center gap-1 rounded-full bg-media-foreground/10 px-2 py-1 text-media-foreground/80">
-          <Timer className="h-3.5 w-3.5" />
+          <Timer className="h-4 w-4" />
           <select
             value={sleepMinutes ?? ""}
             onChange={(e) => setSleepMinutes(e.target.value ? parseInt(e.target.value, 10) : null)}
@@ -1063,7 +1063,7 @@ function AudioStage({
         </label>
         {queue.length > 1 ? (
           <ChipButton onClick={() => setQueueOpen(true)} label={t("viewer.media.queue")}>
-            <ListMusic className="h-3.5 w-3.5" /> {t("viewer.media.queueShort")}
+            <ListMusic className="h-4 w-4" /> {t("viewer.media.queueShort")}
           </ChipButton>
         ) : null}
       </div>
@@ -1090,7 +1090,7 @@ function AudioStage({
                   {i + 1}
                 </span>
                 <span className="min-w-0 flex-1 truncate">{q.name}</span>
-                {q === entry ? <Play className="h-3.5 w-3.5 shrink-0" /> : null}
+                {q === entry ? <Play className="h-4 w-4 shrink-0" /> : null}
               </button>
             </li>
           ))}
@@ -1256,7 +1256,7 @@ function TextStage({ src, entry, parent }: { src: string; entry: FileEntry; pare
             }`}
             aria-label={editing ? t("viewer.text.read") : t("viewer.text.edit")}
           >
-            <SquarePen className="h-3.5 w-3.5" />
+            <SquarePen className="h-4 w-4" />
             {editing ? t("viewer.text.read") : t("viewer.text.edit")}
           </button>
         ) : null}
@@ -1447,21 +1447,21 @@ function FallbackStage({
           onClick={onOpenWith}
           className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-semibold text-primary-foreground transition-transform active:scale-95"
         >
-          <ExternalLink className="h-3.5 w-3.5" /> {t("viewer.fallback.openWith")}
+          <ExternalLink className="h-4 w-4" /> {t("viewer.fallback.openWith")}
         </button>
         <button
           type="button"
           onClick={onShare}
           className="inline-flex items-center gap-1.5 rounded-full bg-reader-ink/6 px-3 py-2 text-[12px] font-medium text-reader-ink transition-transform active:scale-95"
         >
-          <Share2 className="h-3.5 w-3.5" /> {t("viewer.fallback.share")}
+          <Share2 className="h-4 w-4" /> {t("viewer.fallback.share")}
         </button>
         <button
           type="button"
           onClick={onInfo}
           className="inline-flex items-center gap-1.5 rounded-full bg-reader-ink/6 px-3 py-2 text-[12px] font-medium text-reader-ink transition-transform active:scale-95"
         >
-          <Info className="h-3.5 w-3.5" /> {t("viewer.fallback.info")}
+          <Info className="h-4 w-4" /> {t("viewer.fallback.info")}
         </button>
       </div>
     </div>

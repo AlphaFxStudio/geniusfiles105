@@ -56,7 +56,7 @@ export function VaultPreview({
           onClick={onClose}
           className="rounded-full border border-border bg-surface p-1.5 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-semibold text-foreground">{item.name}</p>
@@ -72,7 +72,7 @@ export function VaultPreview({
             item.favorite ? "text-amber-400" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Star className="h-4 w-4" fill={item.favorite ? "currentColor" : "none"} />
+          <Star className="h-[18px] w-[18px]" fill={item.favorite ? "currentColor" : "none"} />
         </button>
         <button
           type="button"
@@ -80,7 +80,7 @@ export function VaultPreview({
           onClick={() => onRestore(item)}
           className="rounded-full border border-border bg-surface p-1.5 text-muted-foreground hover:text-foreground"
         >
-          <Undo2 className="h-4 w-4" />
+          <Undo2 className="h-[18px] w-[18px]" />
         </button>
         <button
           type="button"
@@ -88,7 +88,7 @@ export function VaultPreview({
           onClick={() => onDelete(item)}
           className="rounded-full border border-destructive/30 bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-[18px] w-[18px]" />
         </button>
       </header>
 
@@ -144,7 +144,7 @@ function PreviewBody({ item }: { item: VaultItem }) {
   if (plain === null)
     return (
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> {t("vault.loading")}
+        <Loader2 className="h-[18px] w-[18px] animate-spin" /> {t("vault.loading")}
       </div>
     );
   if (!plain) return <Placeholder label={t("vault.preview.unavailable")} />;
@@ -230,7 +230,7 @@ function TextPreview({ absolute }: { absolute: string }) {
   if (content == null)
     return (
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> {t("vault.loading")}
+        <Loader2 className="h-[18px] w-[18px] animate-spin" /> {t("vault.loading")}
       </div>
     );
   return (

@@ -259,7 +259,7 @@ export function WordEditor({
       />
 
       <div className="flex shrink-0 select-none items-center gap-2 border-b border-border bg-reader-header px-3 py-1.5">
-        <SquarePen className="h-4 w-4 shrink-0 text-reader-header-foreground/70" />
+        <SquarePen className="h-[18px] w-[18px] shrink-0 text-reader-header-foreground/70" />
         <p className="min-w-0 flex-1 truncate text-[11.5px] text-reader-header-foreground/65">
           {restored
             ? t("viewer.word.draftRestored")
@@ -281,7 +281,7 @@ export function WordEditor({
           disabled={saving || !dirty || load.status !== "ready"}
           className="flex h-8 shrink-0 items-center gap-1 rounded-full bg-primary px-3 text-[11.5px] font-semibold text-primary-foreground disabled:opacity-40 active:scale-95"
         >
-          <Save className="h-3.5 w-3.5" />
+          <Save className="h-4 w-4" />
           {saving ? "…" : t("viewer.word.save")}
         </button>
       </div>

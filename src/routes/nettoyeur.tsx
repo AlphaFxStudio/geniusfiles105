@@ -403,7 +403,7 @@ function CleanerPage() {
 
       {permission === "denied" ? (
         <div className="mt-3 flex items-start gap-2.5 rounded-2xl border border-warning/30 bg-warning/10 p-3 text-[12.5px] leading-relaxed text-foreground">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <AlertTriangle className="mt-0.5 h-[18px] w-[18px] shrink-0 text-warning" />
           <span>{t("cleaner.permission.denied")}</span>
         </div>
       ) : null}
@@ -537,7 +537,7 @@ function CleanerPage() {
                 onClick={() => setConfirming(true)}
                 className="gf-press flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-2xl bg-primary px-4 text-[13.5px] font-semibold text-primary-foreground shadow-soft"
               >
-                <Play className="h-4 w-4 shrink-0" />
+                <Play className="h-[18px] w-[18px] shrink-0" />
                 <span className="truncate">
                   {t("cleaner.selection.clean", { amount: freedLabel(selectedBytes) })}
                 </span>

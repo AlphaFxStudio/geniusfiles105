@@ -158,7 +158,7 @@ export function AssistantDrawer({
             </button>
 
             <div className="flex h-11 items-center gap-2.5 rounded-2xl bg-surface-2 px-3.5">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
               <input
                 {...kbSearch}
                 value={query}
@@ -212,7 +212,7 @@ export function AssistantDrawer({
                                 }}
                                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary active:scale-95"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-[18px] w-[18px]" />
                               </button>
                               <button
                                 type="button"
@@ -220,7 +220,7 @@ export function AssistantDrawer({
                                 onClick={() => setEditingId(null)}
                                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-2 text-muted-foreground active:scale-95"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-[18px] w-[18px]" />
                               </button>
                             </div>
                           ) : (
@@ -240,7 +240,7 @@ export function AssistantDrawer({
                                       : "bg-surface-2 text-muted-foreground"
                                   }`}
                                 >
-                                  <MessageSquare className="h-4 w-4" />
+                                  <MessageSquare className="h-[18px] w-[18px]" />
                                 </span>
                                 <span className="min-w-0 flex-1">
                                   <span
@@ -265,7 +265,7 @@ export function AssistantDrawer({
                                 }}
                                 className="flex h-10 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:text-foreground active:scale-95"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Pencil className="h-[18px] w-[18px]" />
                               </button>
                               <button
                                 type="button"
@@ -276,7 +276,7 @@ export function AssistantDrawer({
                                 }}
                                 className="flex h-10 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:text-destructive active:scale-95"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-[18px] w-[18px]" />
                               </button>
                             </div>
                           )}

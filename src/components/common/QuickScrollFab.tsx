@@ -238,9 +238,9 @@ export function QuickScrollFab({ targetRef, topInset = 12, bottomInset = 12, cla
         dragging ? "bg-primary text-primary-foreground" : "text-foreground/70"
       } ${shown ? "opacity-100" : "pointer-events-none opacity-0"} ${className ?? ""}`}
     >
-      <ChevronUp className="h-4 w-4" strokeWidth={2.4} />
+      <ChevronUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
       <span aria-hidden className="h-3 w-[3px] rounded-full bg-current opacity-40" />
-      <ChevronDown className="h-4 w-4" strokeWidth={2.4} />
+      <ChevronDown className="h-[18px] w-[18px]" strokeWidth={2.4} />
     </div>
   );
 }

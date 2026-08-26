@@ -212,7 +212,7 @@ function AutomationsPage() {
             onClick={openCreate}
             className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-[12.5px] font-semibold text-primary-foreground shadow-soft transition-transform active:scale-95"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-[18px] w-[18px]" />
             {tr("automations.new")}
           </button>
         }
@@ -318,7 +318,7 @@ function AutomationsPage() {
             onClick={openCreate}
             className="mt-1 flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground shadow-soft transition-transform active:scale-95"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-[18px] w-[18px]" />
             {tr("automations.empty.cta")}
           </button>
         </div>
@@ -337,7 +337,7 @@ function AutomationsPage() {
         className="card-surface flex w-full items-center gap-3 p-3.5"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
-          <History className="h-4 w-4" />
+          <History className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13.5px] font-medium text-foreground">
@@ -357,7 +357,7 @@ function AutomationsPage() {
               : tr("automations.history.hint")}
           </p>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <ChevronRight className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
       </Link>
 
       {/* Page remplie : bannière adaptative en fin de flux, après les
@@ -466,7 +466,7 @@ function AutomationCard({
               : "bg-accent text-muted-foreground"
           }`}
         >
-          <Power className="h-4 w-4" />
+          <Power className="h-[18px] w-[18px]" />
         </button>
         <button type="button" onClick={onEdit} className="flex-1 text-left">
           <div className="flex items-center gap-2">
@@ -544,7 +544,7 @@ function RowChip({
       onClick={onClick}
       className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${cls}`}
     >
-      <Icon className={`h-3.5 w-3.5 ${spinning ? "animate-spin" : ""}`} />
+      <Icon className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
       {label}
     </button>
   );
@@ -630,7 +630,7 @@ function AutomationWizard({
         <>
           {step > 1 ? (
             <PrimaryButton variant="ghost" onClick={() => setStep((s) => (s - 1) as Step)}>
-              <ArrowLeft className="mr-1 h-4 w-4" /> {tr("action.back")}
+              <ArrowLeft className="mr-1 h-[18px] w-[18px]" /> {tr("action.back")}
             </PrimaryButton>
           ) : (
             <PrimaryButton variant="ghost" onClick={onCancel}>
@@ -642,11 +642,11 @@ function AutomationWizard({
               onClick={() => canNext && setStep((s) => (s + 1) as Step)}
               disabled={!canNext}
             >
-              {tr("action.next")} <ArrowRight className="ml-1 h-4 w-4" />
+              {tr("action.next")} <ArrowRight className="ml-1 h-[18px] w-[18px]" />
             </PrimaryButton>
           ) : (
             <PrimaryButton onClick={submit}>
-              <Check className="mr-1 h-4 w-4" />
+              <Check className="mr-1 h-[18px] w-[18px]" />
               {draft.id ? tr("action.save") : tr("automations.wizard.create")}
             </PrimaryButton>
           )}
@@ -721,7 +721,7 @@ function StepIndicator({ step, onGo }: { step: Step; onGo: (s: Step) => void }) 
                       : "bg-accent text-muted-foreground"
                 }`}
               >
-                {done ? <Check className="h-3 w-3" /> : n}
+                {done ? <Check className="h-3.5 w-3.5" /> : n}
               </span>
               <span className="text-[10px] font-medium">{tr(STEP_KEYS[n as Step])}</span>
             </button>
@@ -759,13 +759,13 @@ function TriggerStep({
         className="card-surface flex w-full items-center gap-3 p-3 text-left"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-          <Zap className="h-4 w-4" />
+          <Zap className="h-[18px] w-[18px]" />
         </span>
         <div className="flex-1">
           <p className="text-[13px] font-medium text-foreground">{current.label}</p>
           <p className="text-[11px] text-muted-foreground">{triggerSummary(trigger)}</p>
         </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
       </button>
       <TriggerParams trigger={trigger} onChange={onChange} />
       {error ? <p className="text-[11px] text-red-500">{error}</p> : null}
@@ -790,7 +790,7 @@ function TriggerStep({
                   <p className="text-[13px] font-medium text-foreground">{entry.label}</p>
                   <p className="text-[11px] text-muted-foreground">{entry.description}</p>
                 </div>
-                {trigger.kind === entry.kind ? <Check className="h-4 w-4 text-primary" /> : null}
+                {trigger.kind === entry.kind ? <Check className="h-[18px] w-[18px] text-primary" /> : null}
               </button>
             </li>
           ))}
@@ -1011,7 +1011,7 @@ function ActionsStep({
           onClick={() => setPickerOpen(true)}
           className="flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground"
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3.5 w-3.5" />
           {tr("automations.actions.add")}
         </button>
       </div>
@@ -1386,7 +1386,7 @@ function SelectionField({
             <span className="text-muted-foreground">{tr("automations.selection.choose")}</span>
           )}
         </span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
       </button>
       {selection && selection.entries.length ? (
         <ul className="mt-1 space-y-0.5">
@@ -1445,7 +1445,7 @@ function DestinationField({
             <span className="text-muted-foreground">{tr("automations.selection.choose")}</span>
           )}
         </span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
       </button>
       <DestinationPicker
         open={open}
@@ -1535,7 +1535,7 @@ function ConditionsStep({
           onClick={() => setPickerOpen(true)}
           className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3.5 w-3.5" />
           {tr("automations.conditions.add")}
         </button>
       </div>
@@ -1775,7 +1775,7 @@ function SummaryStep({
           {tr("automations.summaryStep.trigger")}
         </p>
         <p className="mt-1 flex items-center gap-2 text-[13px] font-medium text-foreground">
-          <CalendarClock className="h-4 w-4 text-primary" />
+          <CalendarClock className="h-[18px] w-[18px] text-primary" />
           {triggerSummary(draft.trigger)}
         </p>
       </div>
@@ -1817,7 +1817,7 @@ function SummaryStep({
           type="checkbox"
           checked={draft.enabled}
           onChange={(e) => onEnabled(e.target.checked)}
-          className="h-4 w-4 accent-[color:var(--primary)]"
+          className="h-[18px] w-[18px] accent-[color:var(--primary)]"
         />
         {tr("automations.summaryStep.enableNow")}
       </label>

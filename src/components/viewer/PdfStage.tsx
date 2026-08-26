@@ -491,7 +491,7 @@ export function PdfStage({
         <div className="flex shrink-0 select-none items-center gap-2 border-b border-white/10 bg-reader-header px-2 py-2">
           {panelOpen === "search" ? (
             <>
-              <Search className="ml-1 h-4 w-4 shrink-0 text-reader-backdrop-foreground/70" />
+              <Search className="ml-1 h-[18px] w-[18px] shrink-0 text-reader-backdrop-foreground/70" />
               <input
                 autoFocus
                 value={query}
@@ -547,7 +547,7 @@ export function PdfStage({
             aria-label={t("action.close")}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-reader-backdrop-foreground/10 text-reader-backdrop-foreground active:scale-95"
           >
-            <X className="h-4 w-4" />
+            <X className="h-[18px] w-[18px]" />
           </button>
         </div>
       ) : null}

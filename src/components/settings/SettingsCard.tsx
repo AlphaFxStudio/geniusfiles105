@@ -44,7 +44,7 @@ export function SettingsCard({
           ) : null}
         </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${
+          className={`h-[18px] w-[18px] shrink-0 text-muted-foreground transition-transform duration-300 ${
             open ? "" : "-rotate-90"
           }`}
         />
@@ -124,7 +124,7 @@ export function SettingsAction({
           : "border-border bg-background text-foreground hover:bg-secondary"
       }`}
     >
-      {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+      {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
   );
@@ -163,14 +163,14 @@ export function SettingsLink({
       rel="noreferrer"
       className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-4 transition-colors active:bg-secondary/40"
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
       <span className="min-w-0">
         <span className="block truncate text-[14px] font-medium text-foreground">{label}</span>
         {desc ? (
           <span className="block truncate text-[12px] text-muted-foreground">{desc}</span>
         ) : null}
       </span>
-      <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-muted-foreground/70" />
+      <ChevronDown className="h-[18px] w-[18px] shrink-0 -rotate-90 text-muted-foreground/70" />
     </a>
   );
 }

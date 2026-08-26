@@ -36,7 +36,7 @@ export function SettingsGroup({
             aria-expanded={isOpen}
           >
             <ChevronDown
-              className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
                 isOpen ? "" : "-rotate-90"
               }`}
             />
@@ -50,7 +50,7 @@ export function SettingsGroup({
         ) : (
           <>
             <h2 className="flex items-center gap-2 text-[13px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              {Icon ? <Icon className="h-3.5 w-3.5 text-primary" /> : null}
+              {Icon ? <Icon className="h-4 w-4 text-primary" /> : null}
               {title}
             </h2>
             {hint ? <span className="text-[11px] text-muted-foreground/70">{hint}</span> : null}
@@ -180,7 +180,7 @@ export function SelectRow<T extends string | number>({
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );
 }

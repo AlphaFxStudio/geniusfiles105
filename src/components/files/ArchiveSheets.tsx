@@ -196,7 +196,7 @@ export function ArchiveCreateSheet({
         {caps?.passwordSupported ? (
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-              <KeyRound className="h-3 w-3" /> {t("files.archive.passwordLabel")}
+              <KeyRound className="h-3.5 w-3.5" /> {t("files.archive.passwordLabel")}
             </label>
             <input
               type="password"
@@ -217,11 +217,11 @@ export function ArchiveCreateSheet({
             onClick={() => setPickerOpen(true)}
             className="card-surface gf-press flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors duration-150 hover:border-primary/40"
           >
-            <FolderOutput className="h-4 w-4 text-primary" />
+            <FolderOutput className="h-[18px] w-[18px] text-primary" />
             <span className="flex-1 truncate text-[12px] text-foreground">
               {destination ? pathToString(destination, roots) : t("files.destination.choose")}
             </span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
       </div>
@@ -382,7 +382,7 @@ export function ArchiveViewerSheet({
       <div className="max-h-[45vh] overflow-y-auto rounded-lg border border-border bg-surface/50">
         {loading ? (
           <div className="flex items-center gap-2 px-2 py-3 text-[12px] text-muted-foreground">
-            <FileArchive className="h-4 w-4 animate-pulse" /> {t("files.archive.reading")}
+            <FileArchive className="h-[18px] w-[18px] animate-pulse" /> {t("files.archive.reading")}
           </div>
         ) : info ? (
           <ArchiveTree
@@ -452,18 +452,18 @@ function ArchiveTree({
             className="text-muted-foreground"
           >
             {isOpen ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-4 w-4" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4" />
             )}
           </button>
           <input
             type="checkbox"
             checked={allSelected}
             onChange={(e) => applyFolderSelect(n, e.target.checked)}
-            className="h-3 w-3 accent-primary"
+            className="h-3.5 w-3.5 accent-primary"
           />
-          <Folder className="h-3.5 w-3.5 text-primary" />
+          <Folder className="h-4 w-4 text-primary" />
           <span className="flex-1 truncate">{n.name}</span>
         </div>,
       );
@@ -479,7 +479,7 @@ function ArchiveTree({
             type="checkbox"
             checked={selected.has(n.path)}
             onChange={() => toggle(n.path)}
-            className="h-3 w-3 accent-primary"
+            className="h-3.5 w-3.5 accent-primary"
           />
           <FileIcon kind="other" />
           <span className="flex-1 truncate">{n.name}</span>
@@ -565,7 +565,7 @@ export function ArchiveExtractSheet({
     >
       <div className="space-y-3">
         <div className="card-surface flex items-center gap-2 px-2.5 py-2">
-          <Package className="h-4 w-4 text-primary" />
+          <Package className="h-[18px] w-[18px] text-primary" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-medium">{entry?.name}</p>
             <p className="text-[10px] text-muted-foreground">
@@ -585,11 +585,11 @@ export function ArchiveExtractSheet({
             onClick={() => setPickerOpen(true)}
             className="card-surface gf-press flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors duration-150 hover:border-primary/40"
           >
-            <FolderOutput className="h-4 w-4 text-primary" />
+            <FolderOutput className="h-[18px] w-[18px] text-primary" />
             <span className="flex-1 truncate text-[12px]">
               {destination ? pathToString(destination, roots) : t("files.destination.choose")}
             </span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
@@ -628,7 +628,7 @@ export function ArchiveExtractSheet({
         {caps?.passwordSupported ? (
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-              <Lock className="h-3 w-3" /> {t("files.archive.passwordLabel")}
+              <Lock className="h-3.5 w-3.5" /> {t("files.archive.passwordLabel")}
             </label>
             <input
               type="password"

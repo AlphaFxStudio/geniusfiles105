@@ -130,7 +130,7 @@ export function QueueSheet({
             aria-label={t("media.player.aria.close")}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-media-foreground/10 gf-press"
           >
-            <X className="h-4 w-4" />
+            <X className="h-[18px] w-[18px]" />
           </button>
           <p className="min-w-0 flex-1 truncate text-[14px] font-semibold">{title}</p>
           <span className="rounded-full bg-media-foreground/10 px-2 py-0.5 text-[11px] text-media-muted">
@@ -184,7 +184,7 @@ export function QueueSheet({
                       />
                       {active ? (
                         <span className="absolute inset-0 flex items-center justify-center bg-scrim/45">
-                          {variant === "audio" ? <WaveIndicator /> : <Play className="h-4 w-4" />}
+                          {variant === "audio" ? <WaveIndicator /> : <Play className="h-[18px] w-[18px]" />}
                         </span>
                       ) : null}
                     </div>

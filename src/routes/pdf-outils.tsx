@@ -3179,7 +3179,7 @@ function SignatureLibraryDialog({
               onClick={() => onDelete(s.id)}
               className="rounded border border-destructive/40 p-1 text-destructive"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}
