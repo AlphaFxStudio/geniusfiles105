@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FileKind } from "@/lib/files/types";
 import { useThumbnail } from "@/hooks/use-thumbnail";
 import { isAndroidNative } from "@/lib/native/geniusfiles-native";
-import { canThumbnail } from "@/lib/native/thumbnails";
+import { canThumbnail, forgetThumbnail } from "@/lib/native/thumbnails";
 import { FILE_KIND_ICON, type GfIconComponent } from "@/components/icons";
 
 /**
@@ -115,7 +115,12 @@ export function FileIcon({
           decoding="async"
           draggable={false}
           onLoad={() => setLoadedSrc(src)}
-          onError={() => setFailedSrc(src)}
+          onError={() => {
+            // Vignette disparue (fichier supprimé, cache purgé) : on oublie
+            // l'association pour qu'elle soit régénérée à la prochaine vue.
+            forgetThumbnail(src);
+            setFailedSrc(src);
+          }}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${
             ready ? "opacity-100" : "opacity-0"
           }`}

@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "@/components/icons";
+import { usePullToRefresh } from "@/lib/gestures/pull-refresh";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -145,6 +146,8 @@ function OrganizationPage() {
       setScanning(false);
     }
   }, [scanning, t]);
+
+  usePullToRefresh(runScan, !scanning);
 
   // Premier scan à l'arrivée si aucun cache.
   useEffect(() => {
