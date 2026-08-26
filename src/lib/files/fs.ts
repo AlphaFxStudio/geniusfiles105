@@ -569,6 +569,8 @@ if (typeof window !== "undefined") {
   window.addEventListener("gf:storage-changed", () => {
     // Un patch vient d'être appliqué : le cache est déjà à jour.
     if (Date.now() - lastPatchAt <= 50) return;
-    invalidateAll();
+    // Un signal grossier ne doit jamais effacer les listes visibles. La
+    // prochaine ouverture revalide mtime + nombre d'entrées et actualise
+    // silencieusement uniquement le dossier réellement modifié.
   });
 }

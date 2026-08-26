@@ -60,6 +60,48 @@ export type TrashListing = {
   totalBytes: number;
 };
 
+const TRASH_CACHE_KEY = "gf.trash.cache.v1";
+let trashCache: TrashListing | null = null;
+let trashHydrated = false;
+let trashInflight: Promise<TrashListing> | null = null;
+
+function hydrateTrashCache(): void {
+  if (trashHydrated) return;
+  trashHydrated = true;
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(TRASH_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { version: 1; listing: TrashListing };
+    if (parsed?.version === 1 && Array.isArray(parsed.listing?.items)) {
+      trashCache = parsed.listing;
+    }
+  } catch {
+    /* Cache absent ou corrompu. */
+  }
+}
+
+function setTrashCache(listing: TrashListing): TrashListing {
+  trashCache = listing;
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(
+        TRASH_CACHE_KEY,
+        JSON.stringify({ version: 1, listing }),
+      );
+    } catch {
+      /* Le cache mémoire suffit pour la session courante. */
+    }
+  }
+  return listing;
+}
+
+/** Dernière corbeille connue, lisible avant tout appel au pont Android. */
+export function peekTrashItems(): TrashListing | null {
+  hydrateTrashCache();
+  return trashCache;
+}
+
 export type RestoreOptions = {
   /** When set, restore every item into this folder instead of its origin. */
   targetPath?: string;
@@ -160,12 +202,15 @@ function toItem(n: NativeTrashItem, retentionDays: number): TrashItem {
 }
 
 export async function listTrashItems(): Promise<TrashListing> {
+  hydrateTrashCache();
+  if (trashInflight) return trashInflight;
   const retention = loadTrashRetention();
   if (isAndroidNative()) {
     const p = nativePlugin();
-    if (!p) return { items: [], totalBytes: 0 };
-    try {
-      const res = await p.listTrash();
+    if (!p) return trashCache ?? { items: [], totalBytes: 0 };
+    trashInflight = (async () => {
+      try {
+        const res = await p.listTrash();
       // Parent-existence probe: best-effort via stat.
       const items: TrashItem[] = [];
       for (const raw of res.items) {
@@ -183,10 +228,14 @@ export async function listTrashItems(): Promise<TrashListing> {
         items.push({ ...base, originalParentExists });
       }
       const totalBytes = items.reduce((s, it) => s + (it.size || 0), 0);
-      return { items, totalBytes };
-    } catch {
-      return { items: [], totalBytes: 0 };
-    }
+        return setTrashCache({ items, totalBytes });
+      } catch {
+        return trashCache ?? { items: [], totalBytes: 0 };
+      } finally {
+        trashInflight = null;
+      }
+    })();
+    return trashInflight;
   }
   const mock = readMock();
   const items: TrashItem[] = mock.map((m) => {
@@ -203,7 +252,7 @@ export async function listTrashItems(): Promise<TrashListing> {
       originalMtime: m.originalMtime ?? m.snapshot?.mtime,
     };
   });
-  return { items, totalBytes: items.reduce((s, it) => s + (it.size || 0), 0) };
+  return setTrashCache({ items, totalBytes: items.reduce((s, it) => s + (it.size || 0), 0) });
 }
 
 export async function usageTrash(): Promise<{ count: number; bytes: number }> {
@@ -256,6 +305,11 @@ async function restoreItemsImpl(
       succeeded: res.restored.length,
       failed: failed.length,
     });
+    const restoredIds = new Set(res.restored.map((item) => item.id));
+    if (trashCache && restoredIds.size > 0) {
+      const next = trashCache.items.filter((item) => !restoredIds.has(item.id));
+      setTrashCache({ items: next, totalBytes: next.reduce((sum, item) => sum + item.size, 0) });
+    }
     dispatchTrashChanged();
     return { restored: res.restored.length, failed };
   }
@@ -309,6 +363,10 @@ async function restoreItemsImpl(
     removedIds.add(it.id);
   }
   writeMock(mock.filter((m) => !removedIds.has(m.id)));
+  if (trashCache) {
+    const next = trashCache.items.filter((item) => !removedIds.has(item.id));
+    setTrashCache({ items: next, totalBytes: next.reduce((sum, item) => sum + item.size, 0) });
+  }
   const restored = removedIds.size;
   recordOperation({
     kind: "copy",
@@ -341,6 +399,11 @@ async function permanentDeleteImpl(items: TrashItem[]): Promise<{
         succeeded: res.deleted.length,
         failed: res.failed.length,
       });
+      if (trashCache) {
+        const deletedIds = new Set(res.deleted);
+        const next = trashCache.items.filter((item) => !deletedIds.has(item.id));
+        setTrashCache({ items: next, totalBytes: next.reduce((sum, item) => sum + item.size, 0) });
+      }
       dispatchTrashChanged();
       return { deleted: res.deleted.length, failed: res.failed };
     } catch {
@@ -350,6 +413,10 @@ async function permanentDeleteImpl(items: TrashItem[]): Promise<{
   const mock = readMock();
   const ids = new Set(items.map((i) => i.id));
   writeMock(mock.filter((m) => !ids.has(m.id)));
+  if (trashCache) {
+    const next = trashCache.items.filter((item) => !ids.has(item.id));
+    setTrashCache({ items: next, totalBytes: next.reduce((sum, item) => sum + item.size, 0) });
+  }
   recordOperation({
     kind: "delete",
     summary: t("ops.trash.permanentDeleteSummary", { count: items.length, name: items[0].name }),
@@ -374,6 +441,7 @@ async function emptyTrashImpl(): Promise<{ deleted: number; failed: number }> {
         succeeded: res.deleted,
         failed: res.failed,
       });
+      setTrashCache({ items: [], totalBytes: 0 });
       dispatchTrashChanged();
       return res;
     } catch {
@@ -382,6 +450,7 @@ async function emptyTrashImpl(): Promise<{ deleted: number; failed: number }> {
   }
   const count = readMock().length;
   writeMock([]);
+  setTrashCache({ items: [], totalBytes: 0 });
   recordOperation({
     kind: "delete",
     summary: t("ops.trash.emptiedSummary", { count }),

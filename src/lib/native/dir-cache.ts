@@ -16,6 +16,7 @@ type Entry = { mtime: number; count: number; entries: NativeDirEntry[]; at: numb
 
 const MAX_ENTRIES = 128; // LRU cap — plenty for typical navigation depth
 const cache = new Map<string, Entry>();
+const inflight = new Map<string, Promise<CachedListing>>();
 
 /* ─────────────────────────────────────────────────────────────
    Persistance légère (démarrage à froid).
@@ -147,6 +148,21 @@ export async function listDirectoryCached(
   opts: { force?: boolean } = {},
 ): Promise<CachedListing> {
   ensureHydrated();
+  const active = inflight.get(path);
+  if (active && !opts.force) return active;
+  const request = listDirectoryCachedImpl(path, opts);
+  inflight.set(path, request);
+  try {
+    return await request;
+  } finally {
+    if (inflight.get(path) === request) inflight.delete(path);
+  }
+}
+
+async function listDirectoryCachedImpl(
+  path: string,
+  opts: { force?: boolean },
+): Promise<CachedListing> {
   const cached = opts.force ? undefined : cache.get(path);
   if (opts.force) cache.delete(path);
   if (cached) {
