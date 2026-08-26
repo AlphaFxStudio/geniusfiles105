@@ -71,7 +71,8 @@ export function ScrollFeel() {
       const b = badge();
       if (!b) return;
       b.style.opacity = progress > 0.02 ? "1" : "0";
-      b.style.transform = `translate(-50%, ${Math.min(value, MAX_PULL)}px) scale(${
+      // L'indicateur reste juste sous l'en-tête : sa course est plafonnée.
+      b.style.transform = `translate(-50%, ${Math.min(value, HOLD)}px) scale(${
         0.7 + Math.min(1, progress) * 0.3
       })`;
       const i = iconRef.current;
@@ -123,8 +124,14 @@ export function ScrollFeel() {
       page = host;
       startY = e.touches[0].clientY;
       startX = e.touches[0].clientX;
-      const header = page.querySelector<HTMLElement>(":scope > header");
-      baseTop = header ? header.getBoundingClientRect().bottom - 42 : 12;
+      /* L'indicateur apparaît TOUJOURS sous l'en-tête : on mesure le bas de
+         l'en-tête réellement affiché (enfant direct, sinon premier en-tête
+         de la page). L'en-tête lui-même n'est jamais déplacé ni animé. */
+      const header =
+        page.querySelector<HTMLElement>(":scope > header") ??
+        page.querySelector<HTMLElement>("header");
+      const bottom = header ? header.getBoundingClientRect().bottom : 0;
+      baseTop = bottom > 0 ? bottom + 6 : 12;
       const b = badge();
       if (b) {
         b.style.transition = "";

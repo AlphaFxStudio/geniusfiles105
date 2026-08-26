@@ -149,8 +149,14 @@ function VaultRoute() {
   useListScrollMemory("vault", true);
 
   const t = useT();
-  const [configured, setConfigured] = useState<boolean | null>(null);
-  const [unlocked, setUnlocked] = useState<boolean>(false);
+  /* État connu dès le premier rendu : la configuration du coffre est une
+     lecture locale synchrone. Aucun écran « chargement » à l'ouverture. */
+  const [configured, setConfigured] = useState<boolean | null>(() =>
+    typeof window === "undefined" ? null : isVaultConfigured(),
+  );
+  const [unlocked, setUnlocked] = useState<boolean>(() =>
+    typeof window === "undefined" ? false : isVaultUnlocked(),
+  );
 
   useEffect(() => {
     setConfigured(isVaultConfigured());

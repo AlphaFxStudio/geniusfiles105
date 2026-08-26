@@ -106,6 +106,56 @@ const RESOLVED_MAX = 800;
 // Cache négatif : évite de retenter en boucle un fichier sans miniature.
 const failed = new Set<string>();
 
+/* ─────────────────────────────────────────────────────────────
+   Persistance des miniatures déjà résolues.
+
+   Les vignettes sont stockées sur disque par le natif : seule la
+   correspondance fichier → vignette se perdait au redémarrage, ce qui
+   provoquait un nouvel aller-retour natif (et donc un clignotement) pour
+   des images pourtant déjà générées. On conserve donc cette table, bornée
+   et versionnée ; une entrée périmée est simplement oubliée à la première
+   erreur de chargement.
+   ───────────────────────────────────────────────────────────── */
+const PERSIST_KEY = "gf.thumbs.v1";
+const PERSIST_MAX = 400;
+let hydrated = false;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function ensureHydrated(): void {
+  if (hydrated) return;
+  hydrated = true;
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(PERSIST_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw) as Record<string, string>;
+    if (!data || typeof data !== "object") return;
+    for (const [k, v] of Object.entries(data)) {
+      if (typeof v === "string" && !resolved.has(k)) resolved.set(k, v);
+    }
+  } catch {
+    /* données illisibles : les miniatures seront simplement regénérées */
+  }
+}
+
+function schedulePersist(): void {
+  if (typeof window === "undefined") return;
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    try {
+      const out: Record<string, string> = {};
+      for (const key of Array.from(resolved.keys()).slice(-PERSIST_MAX)) {
+        const v = resolved.get(key);
+        if (v) out[key] = v;
+      }
+      window.localStorage.setItem(PERSIST_KEY, JSON.stringify(out));
+    } catch {
+      /* quota atteint : la mémoire suffit pour la session */
+    }
+  }, 2000);
+}
+
 function remember(key: string, url: string) {
   resolved.delete(key);
   resolved.set(key, url);
@@ -114,6 +164,18 @@ function remember(key: string, url: string) {
     if (first === undefined) break;
     resolved.delete(first);
   }
+  schedulePersist();
+}
+
+/** Oublie une miniature devenue invalide (fichier supprimé, cache purgé). */
+export function forgetThumbnail(url: string): void {
+  for (const [key, value] of resolved) {
+    if (value === url) {
+      resolved.delete(key);
+      break;
+    }
+  }
+  schedulePersist();
 }
 
 // File d'attente à concurrence limitée : le décodage natif reste réactif et
@@ -162,6 +224,7 @@ export function releaseThumbnail(absolutePath: string, size = 320): void {
 
 /** Sync accessor for a previously-resolved thumbnail. */
 export function peekThumbnail(absolutePath: string, size = 320): string | null {
+  ensureHydrated();
   return resolved.get(`${absolutePath}@${size}`) ?? null;
 }
 
@@ -171,6 +234,7 @@ export function peekThumbnail(absolutePath: string, size = 320): string | null {
  */
 export async function resolveThumbnail(absolutePath: string, size = 320): Promise<string | null> {
   if (!isAndroidNative()) return null;
+  ensureHydrated();
   const key = `${absolutePath}@${size}`;
   const cached = resolved.get(key);
   if (cached) return cached;
@@ -210,7 +274,9 @@ export async function resolveThumbnail(absolutePath: string, size = 320): Promis
 /** Wipe the entire persistent thumbnail cache (used by Nettoyeur/Paramètres). */
 export async function clearThumbnailCache(): Promise<{ deleted: number; bytesFreed: number }> {
   const p = plugin();
+  hydrated = true;
   resolved.clear();
+  schedulePersist();
   inflight.clear();
   failed.clear();
   wanted.clear();

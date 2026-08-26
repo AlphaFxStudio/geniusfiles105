@@ -69,6 +69,7 @@ import { loadScreenState, saveScreenState } from "@/lib/navigation/screen-state"
 import { useRoots } from "@/lib/fs/useRoots";
 import type { FileEntry, PathRef, StorageRootId, ViewMode } from "@/lib/files/types";
 import { runSearch, sortResults } from "@/lib/search/engine";
+import { usePullToRefresh } from "@/lib/gestures/pull-refresh";
 import {
   DEFAULT_FILTERS,
   filtersActive,
@@ -87,7 +88,7 @@ import {
 } from "@/lib/search/history";
 import { loadSearchFilters, saveSearchFilters } from "@/lib/search/preferences";
 import { takeSearchScope, type SearchScope } from "@/lib/search/scope";
-import { getCachedSearch, keyFor, setCachedSearch } from "@/lib/search/cache";
+import { clearSearchCache, getCachedSearch, keyFor, setCachedSearch } from "@/lib/search/cache";
 // Effet de bord : enregistre le provider de recherche par contenu (index
 // inversé + OCR + PDF). Aucune modif d'UI n'est nécessaire — le provider
 // se branche via le point d'extension prévu par le moteur.
@@ -191,6 +192,9 @@ export function SearchPage() {
   const [restored, setRestored] = useState(false);
 
   const [results, setResults] = useState<SearchResult[]>([]);
+  /* Tirer pour actualiser : relance une vraie recherche en ignorant le
+     cache, sans vider la liste affichée entre-temps. */
+  const [reloadTick, setReloadTick] = useState(0);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(0);
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
@@ -407,7 +411,16 @@ export function SearchPage() {
       runRef.current?.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restored, query, filters.kind, filters.size, filters.date, filters.rootId, scope]);
+  }, [
+    restored,
+    query,
+    filters.kind,
+    filters.size,
+    filters.date,
+    filters.rootId,
+    scope,
+    reloadTick,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -561,6 +574,14 @@ export function SearchPage() {
   );
 
   /* ---------- opérations ---------- */
+
+  usePullToRefresh(
+    useCallback(() => {
+      // Le cache est vidé : la relecture repart réellement du stockage.
+      clearSearchCache();
+      setReloadTick((n) => n + 1);
+    }, []),
+  );
 
   const refreshAfterMutation = useCallback(() => {
     if (typeof window !== "undefined") {
