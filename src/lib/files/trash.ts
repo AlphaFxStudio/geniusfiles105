@@ -85,10 +85,7 @@ function setTrashCache(listing: TrashListing): TrashListing {
   trashCache = listing;
   if (typeof window !== "undefined") {
     try {
-      window.localStorage.setItem(
-        TRASH_CACHE_KEY,
-        JSON.stringify({ version: 1, listing }),
-      );
+      window.localStorage.setItem(TRASH_CACHE_KEY, JSON.stringify({ version: 1, listing }));
     } catch {
       /* Le cache mémoire suffit pour la session courante. */
     }
@@ -211,23 +208,23 @@ export async function listTrashItems(): Promise<TrashListing> {
     trashInflight = (async () => {
       try {
         const res = await p.listTrash();
-      // Parent-existence probe: best-effort via stat.
-      const items: TrashItem[] = [];
-      for (const raw of res.items) {
-        const base = toItem(raw, retention);
-        const parent = raw.originalPath ? raw.originalPath.split("/").slice(0, -1).join("/") : "";
-        let originalParentExists: boolean | undefined = undefined;
-        if (parent) {
-          try {
-            await p.stat({ path: parent });
-            originalParentExists = true;
-          } catch {
-            originalParentExists = false;
+        // Parent-existence probe: best-effort via stat.
+        const items: TrashItem[] = [];
+        for (const raw of res.items) {
+          const base = toItem(raw, retention);
+          const parent = raw.originalPath ? raw.originalPath.split("/").slice(0, -1).join("/") : "";
+          let originalParentExists: boolean | undefined = undefined;
+          if (parent) {
+            try {
+              await p.stat({ path: parent });
+              originalParentExists = true;
+            } catch {
+              originalParentExists = false;
+            }
           }
+          items.push({ ...base, originalParentExists });
         }
-        items.push({ ...base, originalParentExists });
-      }
-      const totalBytes = items.reduce((s, it) => s + (it.size || 0), 0);
+        const totalBytes = items.reduce((s, it) => s + (it.size || 0), 0);
         return setTrashCache({ items, totalBytes });
       } catch {
         return trashCache ?? { items: [], totalBytes: 0 };

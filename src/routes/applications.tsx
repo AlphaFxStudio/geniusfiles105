@@ -112,12 +112,8 @@ function AppsPage() {
   const initialApps = useMemo(() => peekInstalledApps(), []);
   const [apps, setApps] = useState<InstalledApp[]>(() => initialApps?.apps ?? []);
   const [loading, setLoading] = useState(() => initialApps == null);
-  const [statsSupported, setStatsSupported] = useState(
-    () => initialApps?.statsSupported ?? false,
-  );
-  const [usageAvailable, setUsageAvailable] = useState(
-    () => initialApps?.usageAvailable ?? false,
-  );
+  const [statsSupported, setStatsSupported] = useState(() => initialApps?.statsSupported ?? false);
+  const [usageAvailable, setUsageAvailable] = useState(() => initialApps?.usageAvailable ?? false);
   const [usable, setUsable] = useState(() => initialApps?.usable ?? true);
   const [requestingUsage, setRequestingUsage] = useState(false);
   const [query, setQuery] = useState("");

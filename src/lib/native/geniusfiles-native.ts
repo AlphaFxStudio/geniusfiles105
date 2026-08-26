@@ -398,10 +398,7 @@ export async function getStorageStats(): Promise<NativeStorageStats | null> {
       storageStatsCache = stats;
       if (typeof window !== "undefined") {
         try {
-          window.localStorage.setItem(
-            STORAGE_STATS_KEY,
-            JSON.stringify({ version: 1, stats }),
-          );
+          window.localStorage.setItem(STORAGE_STATS_KEY, JSON.stringify({ version: 1, stats }));
         } catch {
           /* Le cache mémoire reste actif. */
         }

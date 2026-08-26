@@ -135,45 +135,45 @@ export async function refreshStorageVolumes(): Promise<void> {
   if (volumesInflight) return volumesInflight;
   volumesInflight = (async () => {
     try {
-    const volumes = await nativeListVolumes();
-    const next: ExternalVolume[] = [];
-    for (const v of volumes) {
-      if (v.primary) continue;
-      if (v.state && v.state !== "mounted") continue;
-      next.push({
-        id: volumeToRootId(v) as StorageRootId,
-        label:
-          v.label ||
-          (v.kind === "sdcard"
-            ? t("storage.sdCard")
-            : v.kind === "usb"
-              ? t("storage.usbDevice")
-              : t("storage.external")),
-        absolutePath: v.path,
-        kind: v.kind === "sdcard" || v.kind === "usb" ? v.kind : "external",
-        total: v.total,
-        free: v.free,
-        used: v.used,
-      });
-    }
-    const changed =
-      next.length !== externalCache.length ||
-      next.some(
-        (v, i) =>
-          v.id !== externalCache[i]?.id || v.absolutePath !== externalCache[i]?.absolutePath,
-      );
-    externalCache = next;
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(
-          VOLUMES_CACHE_KEY,
-          JSON.stringify({ version: 1, volumes: next }),
-        );
-      } catch {
-        /* Le cache mémoire reste actif. */
+      const volumes = await nativeListVolumes();
+      const next: ExternalVolume[] = [];
+      for (const v of volumes) {
+        if (v.primary) continue;
+        if (v.state && v.state !== "mounted") continue;
+        next.push({
+          id: volumeToRootId(v) as StorageRootId,
+          label:
+            v.label ||
+            (v.kind === "sdcard"
+              ? t("storage.sdCard")
+              : v.kind === "usb"
+                ? t("storage.usbDevice")
+                : t("storage.external")),
+          absolutePath: v.path,
+          kind: v.kind === "sdcard" || v.kind === "usb" ? v.kind : "external",
+          total: v.total,
+          free: v.free,
+          used: v.used,
+        });
       }
-    }
-    if (changed) notifyRoots();
+      const changed =
+        next.length !== externalCache.length ||
+        next.some(
+          (v, i) =>
+            v.id !== externalCache[i]?.id || v.absolutePath !== externalCache[i]?.absolutePath,
+        );
+      externalCache = next;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(
+            VOLUMES_CACHE_KEY,
+            JSON.stringify({ version: 1, volumes: next }),
+          );
+        } catch {
+          /* Le cache mémoire reste actif. */
+        }
+      }
+      if (changed) notifyRoots();
     } catch {
       /* Conserver la dernière liste valide. */
     } finally {
