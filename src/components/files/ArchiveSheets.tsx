@@ -451,11 +451,7 @@ function ArchiveTree({
             onClick={() => toggleFolder(n.path)}
             className="text-muted-foreground"
           >
-            {isOpen ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
           <input
             type="checkbox"

@@ -392,7 +392,11 @@ function TrashPage() {
                 className="gf-press flex h-10 w-10 items-center justify-center rounded-2xl text-muted-foreground hover:bg-secondary hover:text-foreground"
                 aria-label={allSelected ? t("action.deselectAll") : t("action.selectAll")}
               >
-                {allSelected ? <CheckSquare className="h-[18px] w-[18px]" /> : <Square className="h-[18px] w-[18px]" />}
+                {allSelected ? (
+                  <CheckSquare className="h-[18px] w-[18px]" />
+                ) : (
+                  <Square className="h-[18px] w-[18px]" />
+                )}
               </button>
             ) : null}
             <div ref={menuRef} className="relative">

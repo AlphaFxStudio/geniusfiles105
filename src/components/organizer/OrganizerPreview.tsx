@@ -25,8 +25,7 @@ export function OrganizerPreview({ preview }: { preview: OrgPreview }) {
       {preview.createdFolders.length > 0 ? (
         <div className="rounded-xl border border-border bg-secondary/40 p-3">
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
-            <FolderPlus className="h-4 w-4 text-primary" />{" "}
-            {t("organize.preview.createdFolders")}
+            <FolderPlus className="h-4 w-4 text-primary" /> {t("organize.preview.createdFolders")}
           </div>
           <ul className="mt-1.5 space-y-0.5 text-[11px] text-muted-foreground">
             {preview.createdFolders.map((p) => (

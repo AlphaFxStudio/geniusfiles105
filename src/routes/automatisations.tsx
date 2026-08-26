@@ -790,7 +790,9 @@ function TriggerStep({
                   <p className="text-[13px] font-medium text-foreground">{entry.label}</p>
                   <p className="text-[11px] text-muted-foreground">{entry.description}</p>
                 </div>
-                {trigger.kind === entry.kind ? <Check className="h-[18px] w-[18px] text-primary" /> : null}
+                {trigger.kind === entry.kind ? (
+                  <Check className="h-[18px] w-[18px] text-primary" />
+                ) : null}
               </button>
             </li>
           ))}

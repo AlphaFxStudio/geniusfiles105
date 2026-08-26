@@ -417,7 +417,8 @@ function OrganizationPage() {
             <PlanSummary plan={previewFor.plan} />
             {previewFor.loading ? (
               <div className="mt-3 flex items-center gap-2 text-[12px] text-muted-foreground">
-                <Loader2 className="h-[18px] w-[18px] animate-spin" /> {t("organize.preview.computing")}
+                <Loader2 className="h-[18px] w-[18px] animate-spin" />{" "}
+                {t("organize.preview.computing")}
               </div>
             ) : previewFor.preview ? (
               <div className="mt-3">
@@ -489,7 +490,8 @@ function OrganizationPage() {
       >
         {collectionLoading ? (
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <Loader2 className="h-[18px] w-[18px] animate-spin" /> {t("organize.collection.searching")}
+            <Loader2 className="h-[18px] w-[18px] animate-spin" />{" "}
+            {t("organize.collection.searching")}
           </div>
         ) : collectionMatch ? (
           collectionMatch.entries.length === 0 ? (

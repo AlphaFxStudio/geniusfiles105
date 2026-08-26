@@ -184,7 +184,11 @@ export function QueueSheet({
                       />
                       {active ? (
                         <span className="absolute inset-0 flex items-center justify-center bg-scrim/45">
-                          {variant === "audio" ? <WaveIndicator /> : <Play className="h-[18px] w-[18px]" />}
+                          {variant === "audio" ? (
+                            <WaveIndicator />
+                          ) : (
+                            <Play className="h-[18px] w-[18px]" />
+                          )}
                         </span>
                       ) : null}
                     </div>

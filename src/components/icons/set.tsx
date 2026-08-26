@@ -35,7 +35,6 @@ function solid(Base: PhComponent): GfIconComponent {
   return icon(Base, "fill");
 }
 
-
 /* --------------------------------------------------------------------- */
 /* Familles de fichiers et stockages                                       */
 /* --------------------------------------------------------------------- */

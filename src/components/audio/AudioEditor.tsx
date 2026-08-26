@@ -2872,7 +2872,8 @@ function ToolPanel(props: {
                 })
               }
             >
-              <Check className="mr-1 inline h-[18px] w-[18px]" /> {t("media.editor.tool.censorSelection")}
+              <Check className="mr-1 inline h-[18px] w-[18px]" />{" "}
+              {t("media.editor.tool.censorSelection")}
             </Action>
           </Row>
         </div>
