@@ -135,13 +135,15 @@
   --popover: #262626;
   --popover-foreground: #f4f4f5;
 
-  /* Brand — GeniusFiles blue (actions, focus, indicateurs uniquement) */
+  /* Brand — GeniusFiles blue (actions, focus, indicateurs uniquement).
+     Les aplats teintés restent volontairement discrets : le bleu signale,
+     il ne colore pas l'interface. */
   --primary: #4da3ff;
   --primary-2: #1677ff;
   --primary-foreground: #10151c;
-  --primary-soft: rgb(77 163 255 / 0.16);
-  --primary-softer: rgb(77 163 255 / 0.09);
-  --primary-glow: rgb(77 163 255 / 0.22);
+  --primary-soft: rgb(77 163 255 / 0.1);
+  --primary-softer: rgb(77 163 255 / 0.055);
+  --primary-glow: rgb(77 163 255 / 0.16);
 
   /* Neutrals */
   --secondary: #2a2a2a;
