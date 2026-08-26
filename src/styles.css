@@ -283,13 +283,13 @@ html[data-theme="light"] {
   --popover: #ffffff;
   --popover-foreground: #15171c;
 
-  /* Brand — bleu plus dense : lisible sur fond clair */
+  /* Brand — bleu plus dense : lisible sur fond clair, présent avec parcimonie */
   --primary: #1372f0;
   --primary-2: #0b5ed7;
   --primary-foreground: #ffffff;
-  --primary-soft: rgb(19 114 240 / 0.12);
-  --primary-softer: rgb(19 114 240 / 0.06);
-  --primary-glow: rgb(19 114 240 / 0.18);
+  --primary-soft: rgb(19 114 240 / 0.08);
+  --primary-softer: rgb(19 114 240 / 0.04);
+  --primary-glow: rgb(19 114 240 / 0.14);
 
   /* Neutrals */
   --secondary: #eef0f4;
