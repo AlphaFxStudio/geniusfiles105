@@ -21,6 +21,57 @@ type NativeListResponse = {
   usageAvailable: boolean;
 };
 
+type CachedApps = { version: 1; at: number; result: AppListResult };
+
+const APPS_CACHE_KEY = "gf.apps.cache.v1";
+const APPS_CACHE_TTL = 15 * 60_000;
+let appsCache: CachedApps | null = null;
+let appsHydrated = false;
+let appsInflight: Promise<AppListResult> | null = null;
+
+function hydrateAppsCache(): void {
+  if (appsHydrated) return;
+  appsHydrated = true;
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(APPS_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as CachedApps;
+    if (parsed?.version === 1 && Array.isArray(parsed.result?.apps)) appsCache = parsed;
+  } catch {
+    /* Cache absent ou corrompu : la lecture native le reconstruira. */
+  }
+}
+
+function persistAppsCache(value: CachedApps): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(APPS_CACHE_KEY, JSON.stringify(value));
+  } catch {
+    // Les icônes peuvent dépasser le quota de certains WebView : conserver
+    // au minimum toutes les tailles et métadonnées, qui rendent la liste
+    // immédiatement exploitable au prochain démarrage.
+    try {
+      const compact: CachedApps = {
+        ...value,
+        result: {
+          ...value.result,
+          apps: value.result.apps.map(({ iconBase64: _icon, ...app }) => app),
+        },
+      };
+      window.localStorage.setItem(APPS_CACHE_KEY, JSON.stringify(compact));
+    } catch {
+      /* Le cache mémoire reste disponible pour toute la session. */
+    }
+  }
+}
+
+/** Dernière liste connue, disponible synchroniquement avant le premier rendu. */
+export function peekInstalledApps(): AppListResult | null {
+  hydrateAppsCache();
+  return appsCache?.result ?? null;
+}
+
 type Plugin = {
   listInstalledApps?: (opts?: {
     includeIcons?: boolean;
@@ -44,7 +95,14 @@ function plugin(): Plugin | null {
   return nativePlugin() as unknown as Plugin | null;
 }
 
-export async function listInstalledApps(opts?: { includeIcons?: boolean }): Promise<AppListResult> {
+export async function listInstalledApps(opts?: {
+  includeIcons?: boolean;
+  force?: boolean;
+}): Promise<AppListResult> {
+  hydrateAppsCache();
+  const cached = appsCache;
+  if (!opts?.force && cached && Date.now() - cached.at < APPS_CACHE_TTL) return cached.result;
+
   if (!isAndroidNative()) {
     // Aucune simulation : hors Android, la liste réelle est inaccessible.
     return {
@@ -66,26 +124,40 @@ export async function listInstalledApps(opts?: { includeIcons?: boolean }): Prom
       reason: "no-plugin",
     };
   }
-  try {
-    const res = await p.listInstalledApps({
-      includeIcons: opts?.includeIcons ?? true,
-      iconSize: 96,
-    });
-    return {
-      apps: res.apps,
-      statsSupported: res.statsSupported,
-      usageAvailable: res.usageAvailable,
-      usable: true,
-    };
-  } catch {
-    return {
-      apps: [],
-      statsSupported: false,
-      usageAvailable: false,
-      usable: false,
-      reason: "error",
-    };
-  }
+  if (appsInflight) return appsInflight;
+  appsInflight = (async () => {
+    try {
+      const res = await p.listInstalledApps?.({
+        includeIcons: opts?.includeIcons ?? true,
+        iconSize: 96,
+      });
+      if (!res) return cached?.result ?? unavailableApps("no-plugin");
+      const result: AppListResult = {
+        apps: res.apps,
+        statsSupported: res.statsSupported,
+        usageAvailable: res.usageAvailable,
+        usable: true,
+      };
+      appsCache = { version: 1, at: Date.now(), result };
+      persistAppsCache(appsCache);
+      return result;
+    } catch {
+      return cached?.result ?? unavailableApps("error");
+    } finally {
+      appsInflight = null;
+    }
+  })();
+  return appsInflight;
+}
+
+function unavailableApps(reason: "no-plugin" | "error"): AppListResult {
+  return {
+    apps: [],
+    statsSupported: false,
+    usageAvailable: false,
+    usable: false,
+    reason,
+  };
 }
 
 export async function openApp(packageName: string): Promise<boolean> {

@@ -62,6 +62,7 @@ import {
   getAppPermissions,
   getAppStorage,
   listInstalledApps,
+  peekInstalledApps,
   openApp,
   openAppSettings,
   requestUsageAccess,
@@ -108,11 +109,16 @@ function AppsPage() {
   useListScrollMemory("apps", true);
 
   const t = useT();
-  const [apps, setApps] = useState<InstalledApp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statsSupported, setStatsSupported] = useState(false);
-  const [usageAvailable, setUsageAvailable] = useState(false);
-  const [usable, setUsable] = useState(true);
+  const initialApps = useMemo(() => peekInstalledApps(), []);
+  const [apps, setApps] = useState<InstalledApp[]>(() => initialApps?.apps ?? []);
+  const [loading, setLoading] = useState(() => initialApps == null);
+  const [statsSupported, setStatsSupported] = useState(
+    () => initialApps?.statsSupported ?? false,
+  );
+  const [usageAvailable, setUsageAvailable] = useState(
+    () => initialApps?.usageAvailable ?? false,
+  );
+  const [usable, setUsable] = useState(() => initialApps?.usable ?? true);
   const [requestingUsage, setRequestingUsage] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<AppFilter>("user");
@@ -148,9 +154,10 @@ function AppsPage() {
     BACK_PRIORITY.mode,
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const res = await listInstalledApps({ includeIcons: true });
+  const load = useCallback(async (force = true) => {
+    const hasVisibleContent = peekInstalledApps() != null;
+    if (!hasVisibleContent) setLoading(true);
+    const res = await listInstalledApps({ includeIcons: true, force });
     setApps(res.apps);
     setStatsSupported(res.statsSupported);
     setUsageAvailable(res.usageAvailable);
@@ -162,8 +169,8 @@ function AppsPage() {
   usePullToRefresh(load);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(initialApps != null);
+  }, [initialApps, load]);
 
   // Refresh when the user returns to the app — typically after granting
   // "Usage access" or uninstalling something from Android Settings. We

@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { useT } from "@/lib/i18n";
 import { FileListView } from "@/components/files/FileList";
 import { LoadingState, UnavailableState } from "@/components/files/StateViews";
-import { listInstalledApps } from "@/lib/apps/api";
+import { listInstalledApps, peekInstalledApps } from "@/lib/apps/api";
 import type { InstalledApp } from "@/lib/apps/types";
 import { pickAccepts, popPickScreen, type PickRequest } from "@/lib/files/pick-session";
 import {
@@ -45,13 +45,14 @@ function entryOf(app: InstalledApp): FileEntry {
 
 export function AppsPickScreen({ request }: { request: PickRequest }) {
   const t = useT();
-  const [apps, setApps] = useState<InstalledApp[] | null>(null);
-  const [usable, setUsable] = useState(true);
+  const initial = useMemo(() => peekInstalledApps(), []);
+  const [apps, setApps] = useState<InstalledApp[] | null>(() => initial?.apps ?? null);
+  const [usable, setUsable] = useState(() => initial?.usable ?? true);
   const selection = useSelection();
 
   useEffect(() => {
     let cancelled = false;
-    void listInstalledApps({ includeIcons: true }).then((res) => {
+    void listInstalledApps({ includeIcons: true, force: initial != null }).then((res) => {
       if (cancelled) return;
       setUsable(res.usable);
       setApps(res.usable ? res.apps.filter((a) => !a.isSystem && a.sourceDir) : []);
@@ -59,7 +60,7 @@ export function AppsPickScreen({ request }: { request: PickRequest }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initial]);
 
   const rows = useMemo(() => {
     const list = (apps ?? []).map((app) => ({ app, entry: entryOf(app), parent: parentOf(app) }));
