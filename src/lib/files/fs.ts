@@ -80,7 +80,24 @@ export type ExternalVolume = {
 };
 
 let externalCache: ExternalVolume[] = [];
+const VOLUMES_CACHE_KEY = "gf.storage.volumes.v1";
+let volumesHydrated = false;
+let volumesInflight: Promise<void> | null = null;
 const rootSubscribers = new Set<() => void>();
+
+function hydrateExternalVolumes(): void {
+  if (volumesHydrated) return;
+  volumesHydrated = true;
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(VOLUMES_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { version: 1; volumes: ExternalVolume[] };
+    if (parsed?.version === 1 && Array.isArray(parsed.volumes)) externalCache = parsed.volumes;
+  } catch {
+    /* Cache absent ou corrompu. */
+  }
+}
 
 function notifyRoots() {
   for (const cb of rootSubscribers) {
@@ -100,6 +117,7 @@ export function subscribeRoots(cb: () => void): () => void {
 
 /** Get current detected external volumes (synchronous snapshot). */
 export function getExternalVolumes(): ExternalVolume[] {
+  hydrateExternalVolumes();
   return externalCache;
 }
 
@@ -113,7 +131,10 @@ function volumeToRootId(v: NativeStorageVolume): string {
 /** Refresh the external volume cache from the native bridge. */
 export async function refreshStorageVolumes(): Promise<void> {
   if (!isAndroidNative()) return;
-  try {
+  hydrateExternalVolumes();
+  if (volumesInflight) return volumesInflight;
+  volumesInflight = (async () => {
+    try {
     const volumes = await nativeListVolumes();
     const next: ExternalVolume[] = [];
     for (const v of volumes) {
@@ -142,10 +163,24 @@ export async function refreshStorageVolumes(): Promise<void> {
           v.id !== externalCache[i]?.id || v.absolutePath !== externalCache[i]?.absolutePath,
       );
     externalCache = next;
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          VOLUMES_CACHE_KEY,
+          JSON.stringify({ version: 1, volumes: next }),
+        );
+      } catch {
+        /* Le cache mémoire reste actif. */
+      }
+    }
     if (changed) notifyRoots();
-  } catch {
-    /* ignore */
-  }
+    } catch {
+      /* Conserver la dernière liste valide. */
+    } finally {
+      volumesInflight = null;
+    }
+  })();
+  return volumesInflight;
 }
 
 // Auto-refresh when the native layer signals a mount/unmount event.

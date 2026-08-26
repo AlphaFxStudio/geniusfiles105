@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import {
   getStorageStats,
   isAndroidNative,
+  peekStorageStats,
   type NativeStorageStats,
 } from "@/lib/native/geniusfiles-native";
 
@@ -30,8 +31,11 @@ export function useStorageStats(): {
   refresh: () => void;
 } {
   const supported = isAndroidNative();
-  const [stats, setStats] = useState<StorageStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(supported);
+  const [stats, setStats] = useState<StorageStats | null>(() => {
+    const cached = peekStorageStats();
+    return cached ? decorate(cached) : null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => supported && peekStorageStats() == null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export function useStorageStats(): {
       return;
     }
     let cancelled = false;
-    setLoading(true);
+    if (!peekStorageStats()) setLoading(true);
     getStorageStats().then((s) => {
       if (cancelled) return;
       setStats(s ? decorate(s) : null);
