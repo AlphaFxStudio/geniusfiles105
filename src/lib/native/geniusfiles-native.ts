@@ -261,6 +261,31 @@ type Plugin = {
 
 const nativeProxy = registerPlugin<Plugin>("GeniusFilesNative");
 
+const STORAGE_STATS_KEY = "gf.storage.stats.v1";
+let storageStatsCache: NativeStorageStats | null = null;
+let storageStatsHydrated = false;
+let storageStatsInflight: Promise<NativeStorageStats | null> | null = null;
+
+function hydrateStorageStats(): void {
+  if (storageStatsHydrated) return;
+  storageStatsHydrated = true;
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_STATS_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { version: 1; stats: NativeStorageStats };
+    if (parsed?.version === 1 && parsed.stats?.total > 0) storageStatsCache = parsed.stats;
+  } catch {
+    /* Cache absent ou corrompu. */
+  }
+}
+
+/** Dernières capacités connues, disponibles sans appel natif. */
+export function peekStorageStats(): NativeStorageStats | null {
+  hydrateStorageStats();
+  return storageStatsCache;
+}
+
 /**
  * Accès typé au *même* proxy `GeniusFilesNative`. À utiliser partout ailleurs :
  * appeler `registerPlugin("GeniusFilesNative")` une seconde fois déclenche
@@ -363,13 +388,29 @@ export function onStoragePermissionChanged(
 }
 
 export async function getStorageStats(): Promise<NativeStorageStats | null> {
+  hydrateStorageStats();
+  if (storageStatsInflight) return storageStatsInflight;
   const p = plugin();
-  if (!p) return null;
-  try {
-    return await p.getStorageStats();
-  } catch {
-    return null;
-  }
+  if (!p) return storageStatsCache;
+  storageStatsInflight = (async () => {
+    try {
+      const stats = await p.getStorageStats();
+      storageStatsCache = stats;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(STORAGE_STATS_KEY, JSON.stringify({ version: 1, stats }));
+        } catch {
+          /* Le cache mémoire reste actif. */
+        }
+      }
+      return stats;
+    } catch {
+      return storageStatsCache;
+    } finally {
+      storageStatsInflight = null;
+    }
+  })();
+  return storageStatsInflight;
 }
 
 export async function getAppSigningInfo(): Promise<NativeAppSigningInfo | null> {

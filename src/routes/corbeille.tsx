@@ -49,6 +49,7 @@ import { extOf, formatSize, formatDate, kindOf } from "@/lib/files/format";
 import {
   emptyTrash,
   listTrashItems,
+  peekTrashItems,
   permanentDelete,
   restoreItems,
   type TrashItem,
@@ -124,8 +125,9 @@ function TrashPage() {
   useListScrollMemory("trash", true);
 
   const t = useT();
-  const [items, setItems] = useState<TrashItem[] | null>(null);
-  const [totalBytes, setTotalBytes] = useState(0);
+  const initialTrash = useMemo(() => peekTrashItems(), []);
+  const [items, setItems] = useState<TrashItem[] | null>(() => initialTrash?.items ?? null);
+  const [totalBytes, setTotalBytes] = useState(() => initialTrash?.totalBytes ?? 0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [confirmEmpty, setConfirmEmpty] = useState(false);

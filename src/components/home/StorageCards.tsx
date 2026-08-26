@@ -16,7 +16,11 @@ import { STORAGE_ICON, type GfIconComponent } from "@/components/icons";
 import { getExternalVolumes, subscribeRoots, refreshStorageVolumes } from "@/lib/files/fs";
 import type { StorageRootId } from "@/lib/files/types";
 import { formatSize } from "@/lib/files/format";
-import { getStorageStats, isAndroidNative } from "@/lib/native/geniusfiles-native";
+import {
+  getStorageStats,
+  isAndroidNative,
+  peekStorageStats,
+} from "@/lib/native/geniusfiles-native";
 import { indexCountsByRoot, isIndexReady, restoreIndexFromDisk } from "@/lib/search/index-store";
 import { useT } from "@/lib/i18n";
 
@@ -50,7 +54,10 @@ export function StorageCards({
 }) {
   const t = useT();
   const [internal, setInternal] = useState<{ total: number; free: number; used: number } | null>(
-    null,
+    () => {
+      const cached = peekStorageStats();
+      return cached ? { total: cached.total, free: cached.free, used: cached.used } : null;
+    },
   );
   const [externals, setExternals] = useState(() => getExternalVolumes());
   const [counts, setCounts] = useState<Record<string, number>>(() =>
