@@ -11,7 +11,7 @@ import { FILE_KIND_ICON, type GfIconComponent } from "@/components/icons";
  * distinctive, et reste lisible en thème clair comme en thème sombre.
  */
 const MAP: Record<FileKind, { Icon: GfIconComponent; tone: string }> = {
-  folder: { Icon: FILE_KIND_ICON.folder, tone: "bg-primary/12 text-primary" },
+  folder: { Icon: FILE_KIND_ICON.folder, tone: "bg-secondary text-foreground/75" },
   image: {
     Icon: FILE_KIND_ICON.image,
     tone: "bg-[oklch(0.72_0.16_305/0.14)] text-[oklch(0.62_0.16_305)] dark:text-[oklch(0.82_0.16_305)]",
