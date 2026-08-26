@@ -20,23 +20,27 @@ function make(regular: string, fill?: string) {
     weight = "regular",
     color,
     ...rest
-  }: PhIconProps & { color?: string }): ReactElement => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color ?? "currentColor"}
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-      {...rest}
-      dangerouslySetInnerHTML={{ __html: weight === "fill" && fill ? fill : regular }}
-    />
-  );
+  }: PhIconProps & { color?: string }): ReactElement => {
+    const solid = weight === "fill" && Boolean(fill);
+    const tint = color ?? "currentColor";
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill={solid ? tint : "none"}
+        stroke={solid ? "none" : tint}
+        strokeWidth={solid ? undefined : 1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        focusable="false"
+        {...rest}
+        dangerouslySetInnerHTML={{ __html: solid && fill ? fill : regular }}
+      />
+    );
+  };
   return Icon;
 }
 
