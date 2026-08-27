@@ -46,7 +46,13 @@ export type AudioState = {
   repeat: RepeatMode;
   uiOpen: boolean;
   loaded: boolean;
+  /**
+   * Mini-lecteur masqué à la demande : la lecture continue, seule la barre
+   * du bas disparaît jusqu'à la prochaine ouverture du lecteur ou piste.
+   */
+  miniHidden: boolean;
 };
+
 
 const STORAGE_KEY = "gf.player.state.v1";
 /** Nombre maximal de pistes persistées autour de la position courante. */
@@ -69,7 +75,9 @@ function initialState(): AudioState {
     repeat: "off",
     uiOpen: false,
     loaded: false,
+    miniHidden: false,
   };
+
 }
 
 class AudioStore {
@@ -534,11 +542,47 @@ class AudioStore {
   }
 
   openUI() {
-    if (!this.state.uiOpen) this.setState({ uiOpen: true });
+    if (!this.state.uiOpen || this.state.miniHidden)
+      this.setState({ uiOpen: true, miniHidden: false });
   }
   closeUI() {
     if (this.state.uiOpen) this.setState({ uiOpen: false });
   }
+
+  /** Masque la barre du bas sans toucher à la lecture en cours. */
+  setMiniHidden(v: boolean) {
+    if (this.state.miniHidden !== v) this.setState({ miniHidden: v });
+  }
+
+  /**
+   * Réordonne la file par glisser-déposer sans jamais interrompre la piste
+   * en cours : l'index suit le morceau, pas sa position.
+   */
+  moveTrack(from: number, to: number) {
+    try {
+      const { queue, parents, index } = this.state;
+      if (from === to) return;
+      if (from < 0 || to < 0 || from >= queue.length || to >= queue.length) return;
+      const nextQueue = queue.slice();
+      const [moved] = nextQueue.splice(from, 1);
+      if (!moved) return;
+      nextQueue.splice(to, 0, moved);
+      let nextParents: PathRef[] | null = null;
+      if (parents && parents.length === queue.length) {
+        nextParents = parents.slice();
+        const [p] = nextParents.splice(from, 1);
+        nextParents.splice(to, 0, p as PathRef);
+      }
+      let nextIndex = index;
+      if (index === from) nextIndex = to;
+      else if (from < index && to >= index) nextIndex = index - 1;
+      else if (from > index && to <= index) nextIndex = index + 1;
+      this.setState({ queue: nextQueue, parents: nextParents, index: nextIndex });
+    } catch {
+      /* ignore */
+    }
+  }
+
 
   // ---------- persistence ----------
 
