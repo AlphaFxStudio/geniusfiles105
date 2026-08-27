@@ -46,7 +46,13 @@ export type AudioState = {
   repeat: RepeatMode;
   uiOpen: boolean;
   loaded: boolean;
+  /**
+   * Mini-lecteur masqué à la demande : la lecture continue, seule la barre
+   * du bas disparaît jusqu'à la prochaine ouverture du lecteur ou piste.
+   */
+  miniHidden: boolean;
 };
+
 
 const STORAGE_KEY = "gf.player.state.v1";
 /** Nombre maximal de pistes persistées autour de la position courante. */
