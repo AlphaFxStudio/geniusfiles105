@@ -321,4 +321,17 @@ export default {
   "media.editor.sounds.hint":
     "Sounds generated on the fly, at your file's sample rate. Inserted at the playhead or in place of the selection.",
   "media.editor.pickAudioTitle": "Choose an audio file",
+  "media.player.aria.reorder": "Reorder",
+  "media.player.aria.hideMini": "Hide mini player",
+  "media.player.aria.showMini": "Show mini player",
+  "media.player.miniShow": "Player",
+  "media.player.queueReorder": "Hold the handle to move a track.",
+  "media.player.bg.title": "Background",
+  "media.player.bg.hint": "Pick a mood or import your own image.",
+  "media.player.bg.none": "None",
+  "media.player.bg.custom": "My image",
+  "media.player.bg.abstract": "Abstract",
+  "media.player.bg.concert": "Concert",
+  "media.player.bg.nature": "Nature",
+  "media.player.bg.city": "City",
 } as const;

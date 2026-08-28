@@ -322,4 +322,17 @@ export default {
   "media.editor.sounds.hint":
     "Dosyanızın örnekleme hızında anında oluşturulan sesler. Oynatma noktasına veya seçimin yerine eklenir.",
   "media.editor.pickAudioTitle": "Bir ses dosyası seçin",
+  "media.player.aria.reorder": "Yeniden sırala",
+  "media.player.aria.hideMini": "Mini oynatıcıyı gizle",
+  "media.player.aria.showMini": "Mini oynatıcıyı göster",
+  "media.player.miniShow": "Oynatıcı",
+  "media.player.queueReorder": "Parçayı taşımak için tutamacı basılı tutun.",
+  "media.player.bg.title": "Arka plan",
+  "media.player.bg.hint": "Bir atmosfer seçin veya kendi görselinizi ekleyin.",
+  "media.player.bg.none": "Yok",
+  "media.player.bg.custom": "Kendi görselim",
+  "media.player.bg.abstract": "Soyut",
+  "media.player.bg.concert": "Konser",
+  "media.player.bg.nature": "Doğa",
+  "media.player.bg.city": "Şehir",
 } as const;

@@ -326,4 +326,17 @@ export default {
   "media.editor.sounds.hint":
     "Suoni generati al volo, alla frequenza di campionamento del tuo file. Inseriti al cursore o al posto della selezione.",
   "media.editor.pickAudioTitle": "Scegli un file audio",
+  "media.player.aria.reorder": "Riordina",
+  "media.player.aria.hideMini": "Nascondi mini player",
+  "media.player.aria.showMini": "Mostra mini player",
+  "media.player.miniShow": "Player",
+  "media.player.queueReorder": "Tieni premuta la maniglia per spostare un brano.",
+  "media.player.bg.title": "Sfondo",
+  "media.player.bg.hint": "Scegli un'atmosfera o importa la tua immagine.",
+  "media.player.bg.none": "Nessuno",
+  "media.player.bg.custom": "La mia immagine",
+  "media.player.bg.abstract": "Astratto",
+  "media.player.bg.concert": "Concerto",
+  "media.player.bg.nature": "Natura",
+  "media.player.bg.city": "Città",
 } as const;
