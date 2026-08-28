@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ChevronDown,
+  Image as ImageIcon,
   ListMusic,
   Pause,
   Play,
@@ -18,9 +19,12 @@ import {
 } from "@/components/icons";
 import { VinylDisc } from "./VinylDisc";
 import { QueueSheet } from "./QueueSheet";
+import { BackgroundSheet } from "./BackgroundSheet";
 import { fmtTime, parseTrackName } from "./format";
 import { audioStore, useAudioState } from "@/lib/player/audio-store";
+import { playerBackgroundUrl, usePlayerBackground } from "@/lib/player/background";
 import { audioEditorSearch } from "@/lib/audio/routes";
+import { absolutePathOf } from "@/lib/viewer/source";
 import { useOverlayZClass } from "@/lib/files/overlay-z";
 import { useT } from "@/lib/i18n";
 
@@ -31,6 +35,10 @@ import { useT } from "@/lib/i18n";
  * HTMLAudioElement, so opening/closing it cannot interrupt playback.
  * Rendered through a portal on <body> so no transformed ancestor can
  * offset it and no app navigation stays visible behind it.
+ *
+ * L'arrière-plan plein écran (ambiance fournie ou photo de l'utilisateur)
+ * est purement décoratif : il vit derrière un voile sombre calibré pour
+ * garantir la lisibilité de chaque texte et de chaque commande.
  */
 export function AudioPlayer({ onClose }: { onClose: () => void }) {
   const overlayZ = useOverlayZClass();
@@ -42,8 +50,11 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
   const currentParent = state.parents?.[index] ?? parent;
   const canEdit = !!entry && !!currentParent && entry.kind === "audio";
   const [queueOpen, setQueueOpen] = useState(false);
+  const [bgOpen, setBgOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [artworkUrl] = useState<string | null>(null);
+  const bg = usePlayerBackground();
+  const bgUrl = playerBackgroundUrl(bg);
 
   const meta = useMemo(() => (entry ? parseTrackName(entry.name) : { title: "" }), [entry]);
 
@@ -114,6 +125,14 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
     audioStore.seek((a?.currentTime ?? smoothPos) + delta);
   };
 
+  const pathFor = useCallback(
+    (e: (typeof queue)[number]) => {
+      const p = state.parents?.[queue.indexOf(e)] ?? parent;
+      return p ? absolutePathOf(p, e) : null;
+    },
+    [queue, state.parents, parent],
+  );
+
   if (!entry || !parent || !mounted) return null;
 
   const displayPos = scrub ?? smoothPos;
@@ -124,78 +143,84 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
 
   const ui = (
     <div
-      className={`fixed inset-0 ${overlayZ} flex flex-col overflow-hidden bg-background text-foreground animate-fade-in`}
+      className={`fixed inset-0 ${overlayZ} flex flex-col overflow-hidden bg-media text-media-foreground animate-fade-in`}
       role="dialog"
       aria-modal
       aria-label={t("media.player.aria.audioPlayer")}
     >
-      {/* Fond doux : dégradé d'accent très discret, jamais d'aplat noir brut */}
+      {/* Arrière-plan plein écran + voiles de lisibilité */}
+      {bgUrl ? (
+        <img
+          key={bgUrl}
+          src={bgUrl}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 h-full w-full scale-105 object-cover opacity-70 animate-fade-in"
+        />
+      ) : null}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
-          background:
-            "radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--primary) 16%, transparent) 0%, transparent 60%)",
+          background: bgUrl
+            ? "linear-gradient(180deg, color-mix(in oklab, var(--media) 55%, transparent) 0%, color-mix(in oklab, var(--media) 72%, transparent) 42%, color-mix(in oklab, var(--media) 94%, transparent) 100%)"
+            : "radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 62%)",
+          backdropFilter: bgUrl ? "blur(2px)" : undefined,
         }}
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-surface/40" />
 
       {/* Barre supérieure — marges Android natives */}
       <header
         className="flex items-center gap-3 px-5 pb-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t("media.player.aria.minimize")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-foreground shadow-sm transition-transform active:scale-95"
-        >
+        <GlassButton onClick={onClose} label={t("media.player.aria.minimize")}>
           <ChevronDown className="h-5 w-5" />
-        </button>
+        </GlassButton>
         <div className="min-w-0 flex-1 text-center">
-          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-media-muted">
             {t("media.player.aria.playing")}
           </p>
-          <p className="truncate text-[11px] text-muted-foreground/80">
+          <p className="truncate text-[11px] text-media-muted/85">
             {index + 1} / {queue.length}
             {entry.ext ? ` · ${entry.ext.toUpperCase()}` : ""}
           </p>
         </div>
-        <button
-          type="button"
+        <GlassButton onClick={() => setBgOpen(true)} label={t("media.player.bg.title")}>
+          <ImageIcon className="h-5 w-5" />
+        </GlassButton>
+        <GlassButton
           onClick={() => {
             audioStore.stop();
             onClose();
           }}
-          aria-label={t("media.player.aria.closeStop")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-foreground shadow-sm transition-transform active:scale-95"
+          label={t("media.player.aria.closeStop")}
         >
           <X className="h-5 w-5" />
-        </button>
+        </GlassButton>
       </header>
 
       {/* Disque vinyle */}
       <div className="flex flex-1 items-center justify-center px-8 py-4">
         <div
           key={index}
-          className="w-full max-w-[min(74vw,340px)] animate-scale-in"
+          className="w-full max-w-[min(72vw,320px)] animate-scale-in"
           style={{ animationDuration: "320ms" }}
         >
-          <VinylDisc playing={playing} artworkUrl={artworkUrl} title={meta.title} />
+          <VinylDisc playing={playing} artworkUrl={artworkUrl} />
         </div>
       </div>
 
-      {/* Informations du morceau */}
-      <section className="px-6 text-center">
+      {/* Informations du morceau : une seule hiérarchie, titre en premier */}
+      <section className="px-7 text-center">
         <h2
           key={`t-${index}`}
-          className="line-clamp-2 text-[19px] font-semibold leading-tight text-foreground animate-fade-in"
+          className="line-clamp-2 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-media-foreground animate-fade-in"
           title={meta.title}
         >
           {meta.title}
         </h2>
-        <p className="mt-1.5 truncate text-[13px] font-medium text-muted-foreground animate-fade-in">
+        <p className="mt-2 truncate text-[13.5px] font-medium text-media-muted animate-fade-in">
           {meta.artist ?? t("media.player.unknownArtist")}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
@@ -208,7 +233,7 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
             .map((chip) => (
               <span
                 key={chip as string}
-                className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                className="rounded-full bg-media-foreground/10 px-2.5 py-1 text-[11px] font-medium text-media-muted backdrop-blur-sm"
               >
                 {chip}
               </span>
@@ -217,7 +242,7 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
       </section>
 
       {/* Progression */}
-      <div className="px-6 pt-6">
+      <div className="px-7 pt-6">
         <div
           ref={barRef}
           className="relative flex h-9 cursor-pointer items-center"
@@ -244,7 +269,7 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
           }}
           onPointerCancel={() => setScrub(null)}
         >
-          <div className="absolute inset-x-0 h-[5px] rounded-full bg-surface-3" />
+          <div className="absolute inset-x-0 h-[5px] rounded-full bg-media-foreground/20" />
           <div
             className="absolute h-[5px] rounded-full bg-primary"
             style={{
@@ -253,51 +278,47 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
             }}
           />
           <div
-            className="absolute h-[18px] w-[18px] -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_8px_-1px_color-mix(in_oklab,var(--primary)_60%,transparent)] ring-4 ring-background"
+            className="absolute h-4 w-4 -translate-x-1/2 rounded-full bg-primary shadow-[0_2px_10px_-1px_color-mix(in_oklab,var(--primary)_65%,transparent)]"
             style={{
               left: `${progress * 100}%`,
-              transform: `translateX(-50%) scale(${scrub != null ? 1.25 : 1})`,
+              transform: `translateX(-50%) scale(${scrub != null ? 1.3 : 1})`,
               transition:
                 scrub == null ? "left 90ms linear, transform 150ms ease" : "transform 150ms ease",
             }}
           />
         </div>
-        <div className="mt-1 flex justify-between text-[11px] font-medium tabular-nums text-muted-foreground">
+        <div className="mt-1 flex justify-between text-[11px] font-medium tabular-nums text-media-muted">
           <span>{fmtTime(displayPos)}</span>
           <span>{duration > 0 ? fmtTime(duration) : "--:--"}</span>
         </div>
       </div>
 
-      {/* Contrôles principaux */}
+      {/* Contrôles principaux — hiérarchie claire autour du bouton central */}
       <div className="flex items-center justify-between gap-2 px-7 pt-5">
         <IconButton
           label={t("media.player.aria.shuffle")}
           active={shuffle}
           onClick={() => audioStore.setShuffle(!shuffle)}
         >
-          <Shuffle className="h-[18px] w-[18px]" />
+          <Shuffle className="h-[19px] w-[19px]" />
         </IconButton>
         <IconButton
           label={t("media.player.aria.previous")}
           size="lg"
           onClick={() => audioStore.prev()}
         >
-          <SkipBack className="h-6 w-6" fill="currentColor" />
+          <SkipBack className="h-7 w-7" />
         </IconButton>
         <button
           type="button"
           onClick={() => audioStore.toggle()}
           aria-label={playing ? t("media.player.aria.pause") : t("media.player.aria.play")}
-          className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_-10px_color-mix(in_oklab,var(--primary)_75%,transparent)] transition-transform duration-150 active:scale-95"
+          className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_16px_34px_-12px_color-mix(in_oklab,var(--primary)_80%,transparent)] transition-transform duration-150 active:scale-95"
         >
-          {playing ? (
-            <Pause className="h-8 w-8" fill="currentColor" />
-          ) : (
-            <Play className="ml-1 h-8 w-8" fill="currentColor" />
-          )}
+          {playing ? <Pause className="h-8 w-8" /> : <Play className="ml-1 h-8 w-8" />}
         </button>
         <IconButton label={t("media.player.aria.next")} size="lg" onClick={() => audioStore.next()}>
-          <SkipForward className="h-6 w-6" fill="currentColor" />
+          <SkipForward className="h-7 w-7" />
         </IconButton>
         <IconButton
           label={t("media.player.aria.repeat")}
@@ -307,9 +328,9 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
           }
         >
           {repeat === "one" ? (
-            <Repeat1 className="h-[18px] w-[18px]" />
+            <Repeat1 className="h-[19px] w-[19px]" />
           ) : (
-            <Repeat className="h-[18px] w-[18px]" />
+            <Repeat className="h-[19px] w-[19px]" />
           )}
         </IconButton>
       </div>
@@ -354,13 +375,37 @@ export function AudioPlayer({ onClose }: { onClose: () => void }) {
         entries={queue}
         activeIndex={index}
         onSelect={(i) => audioStore.jumpTo(i)}
+        onReorder={(from, to) => audioStore.moveTrack(from, to)}
+        pathFor={pathFor}
         variant="audio"
         title={t("media.player.queueTitle")}
       />
+      <BackgroundSheet open={bgOpen} onClose={() => setBgOpen(false)} />
     </div>
   );
 
   return createPortal(ui, document.body);
+}
+
+function GlassButton({
+  onClick,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-media-foreground/10 text-media-foreground backdrop-blur-md transition-transform active:scale-95"
+    >
+      {children}
+    </button>
+  );
 }
 
 function IconButton({
@@ -383,8 +428,8 @@ function IconButton({
       aria-label={label}
       aria-pressed={active}
       className={`flex items-center justify-center rounded-full transition-all duration-150 active:scale-90 ${
-        size === "lg" ? "h-13 w-13 p-3" : "h-11 w-11"
-      } ${active ? "bg-primary/15 text-primary" : "text-foreground/80 hover:bg-surface-2"}`}
+        size === "lg" ? "h-14 w-14" : "h-11 w-11"
+      } ${active ? "bg-primary/20 text-primary" : "text-media-foreground/85 hover:bg-media-foreground/10"}`}
     >
       {children}
     </button>
@@ -408,7 +453,7 @@ function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className={`flex items-center gap-1.5 rounded-full bg-surface-2 px-4 py-2 text-[12px] font-medium text-foreground/85 shadow-sm transition-all duration-150 active:scale-95 hover:bg-surface-3 ${disabled ? "cursor-not-allowed opacity-50 active:scale-100" : ""}`}
+      className={`flex items-center gap-1.5 rounded-full bg-media-foreground/10 px-4 py-2 text-[12px] font-medium text-media-foreground/90 backdrop-blur-md transition-all duration-150 active:scale-95 hover:bg-media-foreground/15 ${disabled ? "cursor-not-allowed opacity-45 active:scale-100" : ""}`}
     >
       {children}
     </button>

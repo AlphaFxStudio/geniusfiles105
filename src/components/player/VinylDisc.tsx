@@ -1,22 +1,24 @@
 import { useEffect, useRef } from "react";
-import { Music4 } from "@/components/icons";
+import { Music2 } from "@/components/icons";
 
 /**
- * Premium vinyl record illustration.
+ * Disque vinyle premium.
  *
- * Rotation is driven by requestAnimationFrame with an eased angular velocity:
- * starting playback ramps the disc up smoothly, pausing decelerates it to a
- * stop instead of freezing the CSS animation abruptly.
+ * Rotation pilotée par requestAnimationFrame avec une vitesse angulaire
+ * lissée : la lecture accélère le disque en douceur, la pause le
+ * décélère jusqu'à l'arrêt au lieu de figer brutalement une animation CSS.
+ *
+ * L'étiquette centrale n'affiche JAMAIS le titre : elle porte la pochette
+ * du morceau quand elle existe, sinon un simple symbole. Le titre vit dans
+ * la zone d'informations, une seule fois.
  */
 export function VinylDisc({
   playing,
   artworkUrl,
-  title,
   className = "",
 }: {
   playing: boolean;
   artworkUrl?: string | null;
-  title: string;
   className?: string;
 }) {
   const discRef = useRef<HTMLDivElement | null>(null);
@@ -58,11 +60,11 @@ export function VinylDisc({
       {/* Halo très léger derrière le disque */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-6 rounded-full opacity-70 blur-2xl transition-opacity duration-700"
+        className="pointer-events-none absolute -inset-8 rounded-full blur-3xl transition-opacity duration-700"
         style={{
           background:
-            "radial-gradient(circle, color-mix(in oklab, var(--primary) 32%, transparent) 0%, transparent 68%)",
-          opacity: playing ? 0.8 : 0.35,
+            "radial-gradient(circle, color-mix(in oklab, var(--primary) 26%, transparent) 0%, transparent 66%)",
+          opacity: playing ? 0.7 : 0.28,
         }}
       />
 
@@ -71,8 +73,9 @@ export function VinylDisc({
         className="relative aspect-square w-full rounded-full will-change-transform"
         style={{
           background:
-            "radial-gradient(circle at 32% 28%, #3a3a3f 0%, #1c1c1f 38%, #121214 70%, #202024 100%)",
-          boxShadow: "0 24px 60px -18px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(255,255,255,0.06)",
+            "radial-gradient(circle at 30% 26%, #34343a 0%, #1a1a1e 40%, #0f0f11 72%, #1d1d21 100%)",
+          boxShadow:
+            "0 30px 70px -22px rgba(0,0,0,0.75), inset 0 0 0 1px rgba(255,255,255,0.07), inset 0 0 60px rgba(0,0,0,0.55)",
         }}
       >
         {/* Sillons du vinyle */}
@@ -81,7 +84,7 @@ export function VinylDisc({
           className="absolute inset-0 rounded-full opacity-70"
           style={{
             background:
-              "repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.055) 0px, rgba(255,255,255,0.055) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 5px)",
+              "repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 4px)",
             maskImage:
               "radial-gradient(circle, transparent 33%, black 35%, black 99%, transparent)",
             WebkitMaskImage:
@@ -91,40 +94,38 @@ export function VinylDisc({
         {/* Anneaux marqués */}
         <div
           aria-hidden
-          className="absolute inset-[8%] rounded-full"
-          style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.07)" }}
+          className="absolute inset-[7%] rounded-full"
+          style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
         />
         <div
           aria-hidden
-          className="absolute inset-[18%] rounded-full"
-          style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)" }}
+          className="absolute inset-[19%] rounded-full"
+          style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.045)" }}
         />
-        {/* Reflet lumineux */}
+        {/* Reflet lumineux balayant la surface */}
         <div
           aria-hidden
-          className="absolute inset-0 rounded-full opacity-60"
+          className="absolute inset-0 rounded-full opacity-55"
           style={{
             background:
-              "conic-gradient(from 210deg, transparent 0deg, rgba(255,255,255,0.12) 25deg, transparent 70deg, transparent 190deg, rgba(255,255,255,0.08) 215deg, transparent 260deg)",
+              "conic-gradient(from 205deg, transparent 0deg, rgba(255,255,255,0.14) 24deg, transparent 68deg, transparent 188deg, rgba(255,255,255,0.09) 212deg, transparent 258deg)",
           }}
         />
 
-        {/* Étiquette centrale / miniature */}
+        {/* Étiquette centrale / pochette — jamais de texte de titre */}
         <div
-          className="absolute left-1/2 top-1/2 aspect-square w-[42%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full"
+          className="absolute left-1/2 top-1/2 aspect-square w-[40%] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full"
           style={{
-            background: "linear-gradient(150deg, var(--primary), var(--primary-2, var(--primary)))",
-            boxShadow: "0 6px 18px -6px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.14)",
+            background:
+              "linear-gradient(150deg, color-mix(in oklab, var(--primary) 82%, black), color-mix(in oklab, var(--primary) 45%, black))",
+            boxShadow: "0 8px 22px -8px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.16)",
           }}
         >
           {artworkUrl ? (
             <img src={artworkUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
-              <Music4 className="h-[22%] w-[22%] min-h-4 min-w-4 text-primary-foreground/90" />
-              <span className="line-clamp-2 text-[10px] font-medium leading-tight text-primary-foreground/85">
-                {title}
-              </span>
+            <div className="flex h-full w-full items-center justify-center">
+              <Music2 className="h-[26%] w-[26%] min-h-5 min-w-5 text-primary-foreground/85" />
             </div>
           )}
         </div>
@@ -132,8 +133,8 @@ export function VinylDisc({
         {/* Trou central */}
         <div
           aria-hidden
-          className="absolute left-1/2 top-1/2 aspect-square w-[6%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background"
-          style={{ boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.35)" }}
+          className="absolute left-1/2 top-1/2 aspect-square w-[5.5%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-media"
+          style={{ boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.4)" }}
         />
       </div>
     </div>
