@@ -265,6 +265,8 @@ const STORAGE_STATS_KEY = "gf.storage.stats.v1";
 let storageStatsCache: NativeStorageStats | null = null;
 let storageStatsHydrated = false;
 let storageStatsInflight: Promise<NativeStorageStats | null> | null = null;
+let storageStatsUpdatedAt = 0;
+const STORAGE_STATS_TTL_MS = 5 * 60_000;
 
 function hydrateStorageStats(): void {
   if (storageStatsHydrated) return;
@@ -387,15 +389,19 @@ export function onStoragePermissionChanged(
   };
 }
 
-export async function getStorageStats(): Promise<NativeStorageStats | null> {
+export async function getStorageStats(opts: { force?: boolean } = {}): Promise<NativeStorageStats | null> {
   hydrateStorageStats();
   if (storageStatsInflight) return storageStatsInflight;
+  if (!opts.force && storageStatsCache && Date.now() - storageStatsUpdatedAt < STORAGE_STATS_TTL_MS) {
+    return storageStatsCache;
+  }
   const p = plugin();
   if (!p) return storageStatsCache;
   storageStatsInflight = (async () => {
     try {
       const stats = await p.getStorageStats();
       storageStatsCache = stats;
+      storageStatsUpdatedAt = Date.now();
       if (typeof window !== "undefined") {
         try {
           window.localStorage.setItem(STORAGE_STATS_KEY, JSON.stringify({ version: 1, stats }));
