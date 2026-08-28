@@ -1,19 +1,20 @@
-import { Pause, Play, SkipForward, X } from "@/components/icons";
+import { ChevronUp, Pause, Play, SkipBack, SkipForward, X } from "@/components/icons";
 import { audioStore, useAudioState } from "@/lib/player/audio-store";
 import { AudioPlayer } from "./AudioPlayer";
-import { ArtworkFallback } from "./ArtworkFallback";
+import { FileIcon } from "@/components/files/FileIcon";
 import { parseTrackName } from "./format";
+import { absolutePathOf } from "@/lib/viewer/source";
 import { useT } from "@/lib/i18n";
 import { BACK_PRIORITY, useBackHandler } from "@/lib/navigation/back-stack";
 
 /**
- * Persistent audio surface mounted once at the AppShell level.
+ * Surface audio persistante montée une seule fois au niveau de l'AppShell.
  *
- * - Renders the full-screen `AudioPlayer` overlay when the store's UI flag
- *   is on (opened from the file viewer or from the mini-player).
- * - Renders the always-visible mini-player above the bottom nav whenever
- *   a track is loaded and the full player is closed — the audio itself
- *   never depends on any of this being mounted.
+ * - Affiche le lecteur plein écran quand le drapeau d'interface du store
+ *   est actif (ouvert depuis la visionneuse ou depuis le mini-lecteur).
+ * - Sinon, affiche le mini-lecteur au-dessus de la barre de navigation dès
+ *   qu'une piste est chargée — l'audio lui-même ne dépend jamais de ce
+ *   montage : masquer ou fermer la barre n'interrompt pas la lecture.
  */
 export function PlayerHost() {
   const s = useAudioState();
@@ -30,7 +31,30 @@ export function PlayerHost() {
   const entry = s.queue[s.index];
   if (!entry) return null;
 
-  return <>{s.uiOpen ? <AudioPlayer onClose={() => audioStore.closeUI()} /> : <MiniPlayer />}</>;
+  if (s.uiOpen) return <AudioPlayer onClose={() => audioStore.closeUI()} />;
+  return s.miniHidden ? <MiniHandle /> : <MiniPlayer />;
+}
+
+/** Pastille discrète permettant de rappeler la barre masquée. */
+function MiniHandle() {
+  const t = useT();
+  return (
+    <div
+      data-gf-ad-blocker
+      className="fixed inset-x-0 z-40 mx-auto flex max-w-[520px] justify-end px-3"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+    >
+      <button
+        type="button"
+        onClick={() => audioStore.setMiniHidden(false)}
+        aria-label={t("media.player.aria.showMini")}
+        className="flex h-9 items-center gap-1.5 rounded-full border border-border/60 bg-background/95 px-3 text-[11px] font-medium text-foreground/85 shadow-[0_8px_20px_-12px_rgba(0,0,0,0.6)] backdrop-blur gf-press"
+      >
+        <ChevronUp className="h-4 w-4" />
+        {t("media.player.miniShow")}
+      </button>
+    </div>
+  );
 }
 
 function MiniPlayer() {
@@ -39,7 +63,10 @@ function MiniPlayer() {
   const entry = s.queue[s.index];
   if (!entry) return null;
   const meta = parseTrackName(entry.name);
+  const parent = s.parents?.[s.index] ?? s.parent;
+  const path = parent ? absolutePathOf(parent, entry) : null;
   const progress = s.duration > 0 ? Math.min(1, s.position / s.duration) : 0;
+
   return (
     <div
       /* Couche basse : aucune bannière publicitaire ne peut être posée
@@ -48,66 +75,80 @@ function MiniPlayer() {
       className="fixed inset-x-0 z-40 mx-auto flex max-w-[520px] justify-center px-2"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.25rem)" }}
     >
-      <button
-        type="button"
-        onClick={() => audioStore.openUI()}
-        className="group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-border/60 bg-background/95 px-2 py-2 pr-1 text-left shadow-[0_8px_25px_-10px_rgba(0,0,0,0.5)] backdrop-blur active:scale-[0.99]"
-        aria-label={t("media.player.aria.openPlayer")}
-      >
-        <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg">
-          <ArtworkFallback title={meta.title} className="h-full w-full" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-medium text-foreground">
-            {meta.title}
+      <div className="relative flex w-full items-center gap-2 overflow-hidden rounded-2xl border border-border/60 bg-background/95 py-1.5 pl-2 pr-1 shadow-[0_10px_28px_-14px_rgba(0,0,0,0.55)] backdrop-blur">
+        <button
+          type="button"
+          onClick={() => audioStore.openUI()}
+          className="flex min-w-0 flex-1 items-center gap-2.5 text-left active:scale-[0.99]"
+          aria-label={t("media.player.aria.openPlayer")}
+        >
+          {/* Même système de miniature que le gestionnaire et les catégories. */}
+          <FileIcon kind={entry.kind} size="sm" path={path} className="!rounded-xl" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-medium text-foreground">
+              {meta.title}
+            </span>
+            <span className="block truncate text-[11px] text-muted-foreground">
+              {meta.artist ?? t("media.player.unknownArtist")}
+            </span>
           </span>
-          <span className="block truncate text-[11px] text-muted-foreground">
-            {meta.artist ?? t("media.player.unknownArtist")}
-          </span>
-        </span>
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95"
-          onClick={(e) => {
-            e.stopPropagation();
-            audioStore.toggle();
-          }}
-          role="button"
+        </button>
+
+        <MiniAction label={t("media.player.aria.previous")} onClick={() => audioStore.prev()}>
+          <SkipBack className="h-[17px] w-[17px]" />
+        </MiniAction>
+        <button
+          type="button"
+          onClick={() => audioStore.toggle()}
           aria-label={s.playing ? t("media.player.aria.pause") : t("media.player.aria.play")}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95"
         >
           {s.playing ? (
-            <Pause className="h-[18px] w-[18px]" fill="currentColor" />
+            <Pause className="h-[17px] w-[17px]" />
           ) : (
-            <Play className="ml-0.5 h-[18px] w-[18px]" fill="currentColor" />
+            <Play className="ml-0.5 h-[17px] w-[17px]" />
           )}
-        </span>
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 active:scale-95"
-          onClick={(e) => {
-            e.stopPropagation();
-            audioStore.next();
-          }}
-          role="button"
-          aria-label={t("media.player.aria.next")}
+        </button>
+        <MiniAction label={t("media.player.aria.next")} onClick={() => audioStore.next()}>
+          <SkipForward className="h-[17px] w-[17px]" />
+        </MiniAction>
+        <MiniAction
+          label={t("media.player.aria.hideMini")}
+          onClick={() => audioStore.setMiniHidden(true)}
         >
-          <SkipForward className="h-[18px] w-[18px]" />
-        </span>
-        <span
-          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground active:scale-95"
-          onClick={(e) => {
-            e.stopPropagation();
-            audioStore.stop();
-          }}
-          role="button"
-          aria-label={t("media.player.aria.stop")}
-        >
-          <X className="h-[18px] w-[18px]" />
-        </span>
+          <ChevronUp className="h-[17px] w-[17px] rotate-180" />
+        </MiniAction>
+        <MiniAction label={t("media.player.aria.stop")} onClick={() => audioStore.stop()}>
+          <X className="h-[17px] w-[17px]" />
+        </MiniAction>
+
         <span
           aria-hidden
           className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-primary transition-[width] duration-150"
           style={{ width: `${progress * 100}%` }}
         />
-      </button>
+      </div>
     </div>
+  );
+}
+
+function MiniAction({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="flex h-9 w-8 shrink-0 items-center justify-center rounded-full text-foreground/75 transition-transform active:scale-90"
+    >
+      {children}
+    </button>
   );
 }
