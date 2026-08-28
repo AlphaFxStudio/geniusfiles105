@@ -53,7 +53,6 @@ export type AudioState = {
   miniHidden: boolean;
 };
 
-
 const STORAGE_KEY = "gf.player.state.v1";
 /** Nombre maximal de pistes persistées autour de la position courante. */
 const SAVE_WINDOW = 400;
@@ -77,7 +76,6 @@ function initialState(): AudioState {
     loaded: false,
     miniHidden: false,
   };
-
 }
 
 class AudioStore {
@@ -582,7 +580,6 @@ class AudioStore {
       /* ignore */
     }
   }
-
 
   // ---------- persistence ----------
 
