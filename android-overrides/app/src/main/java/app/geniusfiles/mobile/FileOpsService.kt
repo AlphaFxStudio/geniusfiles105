@@ -94,6 +94,8 @@ class FileOpsService : Service() {
         val startedAt: Long = System.currentTimeMillis()
         @Volatile var endedAt: Long = 0
         @Volatile var lastEmit: Long = 0
+        @Volatile var lastSpeedAt: Long = startedAt
+        @Volatile var lastSpeedBytes: Long = 0
         val failures = java.util.Collections.synchronizedList(ArrayList<Pair<String, String>>())
         val cancelled = AtomicBoolean(false)
         /** Éléments écartés sur décision de l'utilisateur (jamais des échecs). */
@@ -378,9 +380,6 @@ class FileOpsService : Service() {
             }
             emit(ctx, task, force = true)
 
-            var lastTick = System.currentTimeMillis()
-            var lastBytes = 0L
-
             for (p in plans) {
                 if (task.cancelled.get()) break
                 val srcRoot = p.root
@@ -468,19 +467,7 @@ class FileOpsService : Service() {
                     }
                     task.completed++
 
-                    val now = System.currentTimeMillis()
-                    if (now - lastTick >= 400) {
-                        val inst = ((task.bytes - lastBytes) * 1000.0 / (now - lastTick)).toLong()
-                        task.speedBps =
-                            if (task.speedBps > 0) (task.speedBps * 7 + inst * 3) / 10 else inst
-                        lastTick = now
-                        lastBytes = task.bytes
-                        task.etaMs =
-                            if (task.speedBps > 0 && task.totalBytes > task.bytes)
-                                (task.totalBytes - task.bytes) * 1000 / task.speedBps
-                            else -1
-                        emit(ctx, task)
-                    }
+                    emit(ctx, task)
                 }
                 // La source ne disparaît qu'après une arrivée confirmée à
                 // destination ET aucun échec sur CET élément.
@@ -522,6 +509,17 @@ class FileOpsService : Service() {
             val now = System.currentTimeMillis()
             if (!force && now - task.lastEmit < 250) return
             task.lastEmit = now
+            val speedDt = now - task.lastSpeedAt
+            if (speedDt >= 400) {
+                val inst = ((task.bytes - task.lastSpeedBytes) * 1000.0 / speedDt).toLong()
+                task.speedBps = if (task.speedBps > 0) (task.speedBps * 7 + inst * 3) / 10 else inst
+                task.lastSpeedAt = now
+                task.lastSpeedBytes = task.bytes
+                task.etaMs =
+                    if (task.speedBps > 0 && task.totalBytes > task.bytes)
+                        (task.totalBytes - task.bytes) * 1000 / task.speedBps
+                    else -1
+            }
             listener?.invoke("fileOpProgress", task.toJson())
             updateNotification(ctx, task)
         }

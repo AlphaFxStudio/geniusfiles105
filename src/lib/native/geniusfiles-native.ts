@@ -276,7 +276,10 @@ function hydrateStorageStats(): void {
     const raw = window.localStorage.getItem(STORAGE_STATS_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw) as { version: 1; stats: NativeStorageStats };
-    if (parsed?.version === 1 && parsed.stats?.total > 0) storageStatsCache = parsed.stats;
+    if (parsed?.version === 1 && parsed.stats?.total > 0) {
+      storageStatsCache = parsed.stats;
+      storageStatsUpdatedAt = Date.now();
+    }
   } catch {
     /* Cache absent ou corrompu. */
   }
