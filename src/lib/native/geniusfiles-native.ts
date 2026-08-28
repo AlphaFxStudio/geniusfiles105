@@ -392,10 +392,16 @@ export function onStoragePermissionChanged(
   };
 }
 
-export async function getStorageStats(opts: { force?: boolean } = {}): Promise<NativeStorageStats | null> {
+export async function getStorageStats(
+  opts: { force?: boolean } = {},
+): Promise<NativeStorageStats | null> {
   hydrateStorageStats();
   if (storageStatsInflight) return storageStatsInflight;
-  if (!opts.force && storageStatsCache && Date.now() - storageStatsUpdatedAt < STORAGE_STATS_TTL_MS) {
+  if (
+    !opts.force &&
+    storageStatsCache &&
+    Date.now() - storageStatsUpdatedAt < STORAGE_STATS_TTL_MS
+  ) {
     return storageStatsCache;
   }
   const p = plugin();

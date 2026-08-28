@@ -589,10 +589,7 @@ if (typeof window !== "undefined") {
                   },
                 ],
           );
-          rekeyCachedSubtree(
-            `${fromDir}/${patch.fromName}`,
-            `${toDir}/${patch.toName}`,
-          );
+          rekeyCachedSubtree(`${fromDir}/${patch.fromName}`, `${toDir}/${patch.toName}`);
           break;
         }
       }
