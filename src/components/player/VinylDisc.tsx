@@ -123,11 +123,7 @@ export function VinylDisc({
         >
           {artworkUrl ? (
             <img src={artworkUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <Music2 className="h-[26%] w-[26%] min-h-5 min-w-5 text-primary-foreground/85" />
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Trou central */}
