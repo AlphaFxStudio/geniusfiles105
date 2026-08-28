@@ -829,7 +829,6 @@ export function FilesPage() {
         groups,
         destination: dest,
         onDone: (task) => {
-          onRefresh();
           if (task.status === "cancelled") {
             toast.warning(t("home.transfer.cancelled"), {
               description: t("home.transfer.cancelledDetail", { count: task.succeeded, unit }),
@@ -879,7 +878,7 @@ export function FilesPage() {
       clearSelection();
       invalidateSizes();
     },
-    [clearSelection, groupsFor, onRefresh, t],
+    [clearSelection, groupsFor, t],
   );
 
   /**
@@ -1667,7 +1666,6 @@ function RootView({
        renommage) relance le calcul en tâche de fond, de même que le
        montage/démontage d'un volume et le retour au premier plan.
      ───────────────────────────────────────────────────────────── */
-  const [scanTick, setScanTick] = useState(0);
   const [volumeIds, setVolumeIds] = useState<StorageRootId[]>(() =>
     getExternalVolumes().map((v) => v.id),
   );
@@ -1677,30 +1675,6 @@ function RootView({
     const unsub = subscribeRoots(sync);
     void refreshStorageVolumes().then(sync);
     return unsub;
-  }, []);
-
-  // Recalcul déclenché par les mutations de fichiers (débounce court :
-  // une opération par lot ne provoque qu'un seul recalcul).
-  useEffect(() => {
-    let timer: number | undefined;
-    const schedule = () => {
-      if (typeof window === "undefined") return;
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => setScanTick((t) => t + 1), 600);
-    };
-    const unsubPatch = subscribeFsPatch(schedule);
-    const onChanged = () => schedule();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") schedule();
-    };
-    window.addEventListener("gf:storage-changed", onChanged);
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.clearTimeout(timer);
-      unsubPatch();
-      window.removeEventListener("gf:storage-changed", onChanged);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
   }, []);
 
   const scanRootsKey = volumeIds.join(",");
@@ -1746,7 +1720,7 @@ function RootView({
     return () => {
       cancelled = true;
     };
-  }, [scanTick]);
+  }, []);
 
   /* Applications : la tuile ouvre le gestionnaire d'applications, elle
      doit donc refléter les applications INSTALLÉES (taille APK + code +
@@ -1766,7 +1740,7 @@ function RootView({
     return () => {
       cancelled = true;
     };
-  }, [scanTick]);
+  }, []);
 
   // Le salut dépend de l'heure locale : on rend une valeur stable au
   // premier passage (SSR + hydratation), puis on l'ajuste après montage.

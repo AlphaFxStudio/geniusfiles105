@@ -24,6 +24,7 @@ import { requestFileJump } from "@/lib/files/deeplink";
 import { showNotification } from "@/lib/native/notifications";
 import { formatSize } from "@/lib/files/format";
 import { toAbsolutePath } from "@/lib/files/fs";
+import { dispatchFsPatch } from "@/lib/index/patches";
 import {
   requestConflictDecision,
   resolveTransferConflicts,
@@ -81,6 +82,8 @@ type Internal = TransferTask & {
   lastBytes: number;
   /** Exécutée par le service Android : rien ne tourne dans la WebView. */
   native?: boolean;
+  nativeGroups?: TransferGroup[];
+  nativePatched?: boolean;
   onDone?: (task: TransferTask) => void;
 };
 
@@ -90,7 +93,15 @@ let snapshot: TransferTask[] = [];
 
 function publish() {
   snapshot = [...tasks.values()].map(
-    ({ signal: _s, lastTick: _t, lastBytes: _b, onDone: _d, ...t }) => t,
+    ({
+      signal: _s,
+      lastTick: _t,
+      lastBytes: _b,
+      onDone: _d,
+      nativeGroups: _g,
+      nativePatched: _p,
+      ...t
+    }) => t,
   );
   for (const l of listeners) l();
 }
@@ -272,6 +283,7 @@ async function begin(
     (overwrite.size === 0 || nativeConflictsSupported())
   ) {
     task.native = true;
+    task.nativeGroups = plannedGroups;
     const sources = plannedGroups.flatMap((g) =>
       g.entries.map((e) => `${toAbsolutePath(g.parent)}/${e.name}`),
     );
@@ -319,6 +331,41 @@ function applyNative(snap: NativeTaskSnapshot, task: Internal) {
     task.speedBps = 0;
     task.etaMs = 0;
     task.message = summaryMessage(task);
+    if (snap.status === "done") applyNativePatches(task);
+  }
+}
+
+/** Met à jour les listes/cache à la fin du service natif, sans relecture. */
+function applyNativePatches(task: Internal) {
+  if (task.nativePatched || !task.nativeGroups) return;
+  task.nativePatched = true;
+  const failed = new Set(task.failures.map((failure) => failure.name));
+  for (const group of task.nativeGroups) {
+    for (const entry of group.entries) {
+      if (failed.has(entry.name)) continue;
+      if (task.mode === "move") {
+        dispatchFsPatch({
+          op: "move",
+          fromRootId: group.parent.rootId,
+          fromSegments: group.parent.segments,
+          fromName: entry.name,
+          toRootId: task.destination.rootId,
+          toSegments: task.destination.segments,
+          toName: entry.name,
+          isDirectory: entry.isDirectory,
+        });
+      } else {
+        dispatchFsPatch({
+          op: "create",
+          rootId: task.destination.rootId,
+          segments: task.destination.segments,
+          name: entry.name,
+          isDirectory: entry.isDirectory,
+          size: entry.size,
+          mtime: entry.mtime,
+        });
+      }
+    }
   }
 }
 

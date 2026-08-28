@@ -24,6 +24,7 @@ import {
   listDirectoryCached,
   peekCachedEntries,
   prefetchDirectory,
+  rekeyCachedSubtree,
   updateCachedEntries,
 } from "@/lib/native/dir-cache";
 import type { NativeDirEntry } from "@/lib/native/geniusfiles-native";
@@ -562,9 +563,7 @@ if (typeof window !== "undefined") {
             });
             return touched ? next : null;
           });
-          // Le sous-arbre renommé change de chemin : ses entrées cachées
-          // deviennent obsolètes (et sont peu nombreuses).
-          invalidateUnder(`${dir}/${patch.oldName}`);
+          rekeyCachedSubtree(`${dir}/${patch.oldName}`, `${dir}/${patch.newName}`);
           break;
         }
         case "move": {
@@ -590,7 +589,7 @@ if (typeof window !== "undefined") {
                   },
                 ],
           );
-          invalidateUnder(`${fromDir}/${patch.fromName}`);
+          rekeyCachedSubtree(`${fromDir}/${patch.fromName}`, `${toDir}/${patch.toName}`);
           break;
         }
       }

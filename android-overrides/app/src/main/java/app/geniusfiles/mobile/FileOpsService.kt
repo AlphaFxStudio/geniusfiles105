@@ -16,6 +16,7 @@ import com.getcapacitor.JSObject
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -92,6 +93,9 @@ class FileOpsService : Service() {
         @Volatile var etaMs: Long = -1
         val startedAt: Long = System.currentTimeMillis()
         @Volatile var endedAt: Long = 0
+        @Volatile var lastEmit: Long = 0
+        @Volatile var lastSpeedAt: Long = startedAt
+        @Volatile var lastSpeedBytes: Long = 0
         val failures = java.util.Collections.synchronizedList(ArrayList<Pair<String, String>>())
         val cancelled = AtomicBoolean(false)
         /** Éléments écartés sur décision de l'utilisateur (jamais des échecs). */
@@ -149,7 +153,9 @@ class FileOpsService : Service() {
         private const val NOTIF_BASE = 4300
         private var nextNotif = 0
 
-        private val pool = Executors.newFixedThreadPool(2) { r ->
+        private val pool = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors().coerceIn(3, 4),
+        ) { r ->
             Thread(r, "gf-fileops").apply { priority = Thread.NORM_PRIORITY - 1 }
         }
         val tasks = ConcurrentHashMap<String, Task>()
@@ -324,21 +330,36 @@ class FileOpsService : Service() {
             return p
         }
 
-        private fun copyStream(src: File, dst: File) {
+        private fun copyStream(ctx: Context, task: Task, src: File, dst: File): Boolean {
             dst.parentFile?.mkdirs()
             FileInputStream(src).channel.use { input ->
                 FileOutputStream(dst).channel.use { output ->
                     var pos = 0L
                     val size = input.size()
-                    // Blocs de 8 Mio : débit maximal, empreinte mémoire plate.
+                    val fallback = ByteBuffer.allocateDirect(1024 * 1024)
                     while (pos < size) {
+                        if (task.cancelled.get()) return false
                         val n = input.transferTo(pos, minOf(8L * 1024 * 1024, size - pos), output)
-                        if (n <= 0) break
-                        pos += n
+                        if (n > 0) {
+                            pos += n
+                            task.bytes += n
+                            emit(ctx, task)
+                            continue
+                        }
+                        input.position(pos)
+                        fallback.clear()
+                        val read = input.read(fallback)
+                        if (read <= 0) throw java.io.EOFException("Copie interrompue")
+                        fallback.flip()
+                        while (fallback.hasRemaining()) output.write(fallback)
+                        pos += read
+                        task.bytes += read
+                        emit(ctx, task)
                     }
                 }
             }
             try { dst.setLastModified(src.lastModified()) } catch (_: Throwable) {}
+            return true
         }
 
         private fun runTask(ctx: Context, task: Task) {
@@ -358,9 +379,6 @@ class FileOpsService : Service() {
                 task.totalBytes += p.bytes
             }
             emit(ctx, task, force = true)
-
-            var lastTick = System.currentTimeMillis()
-            var lastBytes = 0L
 
             for (p in plans) {
                 if (task.cancelled.get()) break
@@ -442,27 +460,14 @@ class FileOpsService : Service() {
                             }
                         }
 
-                        copyStream(f, out)
-                        task.bytes += f.length()
+                        if (!copyStream(ctx, task, f, out)) break
                     } catch (e: Throwable) {
                         // Un échec n'interrompt jamais la tâche : on continue.
                         task.failures.add(f.name to (e.message ?: "Copie impossible"))
                     }
                     task.completed++
 
-                    val now = System.currentTimeMillis()
-                    if (now - lastTick >= 400) {
-                        val inst = ((task.bytes - lastBytes) * 1000.0 / (now - lastTick)).toLong()
-                        task.speedBps =
-                            if (task.speedBps > 0) (task.speedBps * 7 + inst * 3) / 10 else inst
-                        lastTick = now
-                        lastBytes = task.bytes
-                        task.etaMs =
-                            if (task.speedBps > 0 && task.totalBytes > task.bytes)
-                                (task.totalBytes - task.bytes) * 1000 / task.speedBps
-                            else -1
-                        emit(ctx, task)
-                    }
+                    emit(ctx, task)
                 }
                 // La source ne disparaît qu'après une arrivée confirmée à
                 // destination ET aucun échec sur CET élément.
@@ -500,12 +505,21 @@ class FileOpsService : Service() {
             }
         }
 
-        private var lastEmit = 0L
-
         private fun emit(ctx: Context, task: Task, force: Boolean = false) {
             val now = System.currentTimeMillis()
-            if (!force && now - lastEmit < 250) return
-            lastEmit = now
+            if (!force && now - task.lastEmit < 250) return
+            task.lastEmit = now
+            val speedDt = now - task.lastSpeedAt
+            if (speedDt >= 400) {
+                val inst = ((task.bytes - task.lastSpeedBytes) * 1000.0 / speedDt).toLong()
+                task.speedBps = if (task.speedBps > 0) (task.speedBps * 7 + inst * 3) / 10 else inst
+                task.lastSpeedAt = now
+                task.lastSpeedBytes = task.bytes
+                task.etaMs =
+                    if (task.speedBps > 0 && task.totalBytes > task.bytes)
+                        (task.totalBytes - task.bytes) * 1000 / task.speedBps
+                    else -1
+            }
             listener?.invoke("fileOpProgress", task.toJson())
             updateNotification(ctx, task)
         }

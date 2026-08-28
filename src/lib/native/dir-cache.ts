@@ -33,8 +33,8 @@ const inflight = new Map<string, Promise<CachedListing>>();
    la batterie.
    ───────────────────────────────────────────────────────────── */
 const PERSIST_KEY = "gf.dircache.v1";
-const PERSIST_MAX_DIRS = 24;
-const PERSIST_MAX_ENTRIES_PER_DIR = 400;
+const PERSIST_MAX_DIRS = 48;
+const PERSIST_MAX_ENTRIES_PER_DIR = 1500;
 let hydrated = false;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -97,10 +97,14 @@ function schedulePersist(): void {
 
 if (typeof window !== "undefined") {
   // Mise en arrière-plan : on fige l'état courant sans attendre le délai.
-  window.addEventListener("pagehide", () => {
+  const flush = () => {
     if (persistTimer) clearTimeout(persistTimer);
     persistTimer = null;
     writePersisted();
+  };
+  window.addEventListener("pagehide", flush);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flush();
   });
 }
 
@@ -190,13 +194,15 @@ async function listDirectoryCachedImpl(
     cache.delete(path);
     return res;
   }
-  // Best-effort: compute a synthetic mtime = max(entry.mtime). Not exact,
-  // but combined with entry count it detects any add/remove/modify.
+  // Store the directory's own mtime: this is the value returned by the
+  // cheap validation probe. Using the newest child's mtime here made the
+  // two values incomparable and forced a full listing on every opening.
+  const stat = await statDirectory(path);
   let mtime = 0;
   for (const e of res.listing.entries) if (e.mtime > mtime) mtime = e.mtime;
   touch(path, {
-    mtime,
-    count: res.listing.entries.length,
+    mtime: stat.ok ? stat.mtime : mtime,
+    count: stat.ok ? stat.count : res.listing.entries.length,
     entries: res.listing.entries,
     at: Date.now(),
   });
@@ -263,6 +269,20 @@ export function invalidateUnder(rootPath: string): void {
   for (const key of Array.from(cache.keys())) {
     if (key === prefix || key.startsWith(prefix + "/")) cache.delete(key);
   }
+}
+
+/** Conserve le cache d'un sous-arbre après un renommage/déplacement. */
+export function rekeyCachedSubtree(oldRootPath: string, newRootPath: string): void {
+  ensureHydrated();
+  const oldPrefix = oldRootPath.replace(/\/+$/, "");
+  const nextPrefix = newRootPath.replace(/\/+$/, "");
+  const moved: [string, Entry][] = [];
+  for (const [key, entry] of cache) {
+    if (key !== oldPrefix && !key.startsWith(`${oldPrefix}/`)) continue;
+    cache.delete(key);
+    moved.push([`${nextPrefix}${key.slice(oldPrefix.length)}`, entry]);
+  }
+  for (const [key, entry] of moved) touch(key, entry);
 }
 
 /** Drop the entire cache (rare — permission changes, root switch). */

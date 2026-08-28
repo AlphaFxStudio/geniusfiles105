@@ -45,7 +45,7 @@ export function useStorageStats(): {
     }
     let cancelled = false;
     if (!peekStorageStats()) setLoading(true);
-    getStorageStats().then((s) => {
+    getStorageStats({ force: tick > 0 }).then((s) => {
       if (cancelled) return;
       setStats(s ? decorate(s) : null);
       setLoading(false);
