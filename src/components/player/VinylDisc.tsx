@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { Music2 } from "@/components/icons";
 
 /**
  * Disque vinyle premium.
