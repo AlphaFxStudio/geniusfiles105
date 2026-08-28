@@ -326,4 +326,17 @@ export default {
   "media.editor.sounds.hint":
     "Töne werden spontan mit der Samplerate deiner Datei erzeugt. Sie werden an der Abspielposition oder anstelle der Auswahl eingefügt.",
   "media.editor.pickAudioTitle": "Audiodatei auswählen",
+  "media.player.aria.reorder": "Neu ordnen",
+  "media.player.aria.hideMini": "Mini-Player ausblenden",
+  "media.player.aria.showMini": "Mini-Player anzeigen",
+  "media.player.miniShow": "Player",
+  "media.player.queueReorder": "Griff halten, um einen Titel zu verschieben.",
+  "media.player.bg.title": "Hintergrund",
+  "media.player.bg.hint": "Wähle eine Stimmung oder importiere dein Bild.",
+  "media.player.bg.none": "Keiner",
+  "media.player.bg.custom": "Mein Bild",
+  "media.player.bg.abstract": "Abstrakt",
+  "media.player.bg.concert": "Konzert",
+  "media.player.bg.nature": "Natur",
+  "media.player.bg.city": "Stadt",
 } as const;
