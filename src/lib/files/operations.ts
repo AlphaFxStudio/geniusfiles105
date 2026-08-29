@@ -423,6 +423,11 @@ const DELETE_CHUNK = 12;
 export type DeleteOptions = {
   onProgress?: (p: ProgressEvent) => void;
   signal?: OperationSignal;
+  /**
+   * Suppression définitive : l'élément est détruit sur place sans passer
+   * par la corbeille (aucune restauration possible).
+   */
+  permanent?: boolean;
 };
 
 async function deleteEntriesImpl(
@@ -440,7 +445,7 @@ async function deleteEntriesImpl(
 }
 
 /** Retire un lot de l'arborescence simulée (aperçu web) + Corbeille. */
-function mockRemoveBatch(parent: PathRef, names: string[]): void {
+function mockRemoveBatch(parent: PathRef, names: string[], recordTrash = true): void {
   const removed: MockNode[] = [];
   mockMutate(parent, (node) => {
     if (!node.children) return null;
@@ -465,7 +470,7 @@ function mockRemoveBatch(parent: PathRef, names: string[]): void {
     rootId: parent.rootId,
     snapshot: node,
   }));
-  recordMockTrash(records);
+  if (recordTrash) recordMockTrash(records);
 }
 
 async function runDelete(
@@ -546,7 +551,16 @@ async function runDelete(
     /** Motif remonté par le backend, par nom (peut rester vide). */
     const reported = new Map<string, string>();
 
-    if (p) {
+    if (p && opts.permanent) {
+      // Suppression définitive : destruction sur place, sans corbeille.
+      for (const n of names) {
+        try {
+          await p.deletePath({ path: joinAbs(base, n) });
+        } catch (err) {
+          reported.set(n, humanizeIoError(err, t("ops.error.deleteFailed")));
+        }
+      }
+    } else if (p) {
       try {
         const res = await p.moveToTrash({ paths: names.map((n) => joinAbs(base, n)) });
         for (const mv of res.moved ?? []) movedRecords.push(mv);
@@ -560,7 +574,7 @@ async function runDelete(
         for (const n of names) reported.set(n, reason);
       }
     } else {
-      mockRemoveBatch(parent, names);
+      mockRemoveBatch(parent, names, !opts.permanent);
     }
 
     // ── Contrôle de l'état RÉEL du stockage. C'est lui, et non le code de
