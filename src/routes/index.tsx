@@ -227,7 +227,7 @@ type ActiveDialog =
   | { kind: "newFolder" }
   | { kind: "rename"; entry: FileEntry }
   | { kind: "details"; info: DetailsInfo | null; loading: boolean }
-  | { kind: "confirmDelete"; entries: FileEntry[] }
+  | { kind: "confirmDelete"; entries: FileEntry[]; fromViewer?: boolean }
   | { kind: "actions"; entry: FileEntry }
   | { kind: "archiveCreate"; entries: FileEntry[] }
   | {
@@ -292,6 +292,9 @@ export function FilesPage() {
    * la vidéo (plus de fermeture intempestive ni de perte de position).
    */
   const [viewerName, setViewerName] = useState<string | null>(null);
+  // Case « Supprimer définitivement » du dialogue de suppression ouvert
+  // depuis le lecteur : décochée = corbeille, cochée = destruction.
+  const [deleteForever, setDeleteForever] = useState(false);
 
   const [dialog, setDialog] = useState<ActiveDialog>({ kind: "none" });
   const [moreOpen, setMoreOpen] = useState(false);
@@ -902,9 +905,9 @@ export function FilesPage() {
   );
 
   const runDelete = useCallback(
-    async (entries: FileEntry[]) => {
+    async (entries: FileEntry[], opts?: { permanent?: boolean }): Promise<boolean> => {
       const groups = groupsFor(entries);
-      if (groups.length === 0) return;
+      if (groups.length === 0) return true;
       const unit = unitFor(entries);
       let succeeded = 0;
       const failed: { name: string; reason?: string }[] = [];
@@ -929,6 +932,7 @@ export function FilesPage() {
           }
           const res = await deleteEntries(group.parent, group.entries, {
             signal,
+            permanent: opts?.permanent,
             onProgress: heavy ? (p) => setProgress(p) : undefined,
           });
           succeeded += res.succeeded ?? 0;
@@ -951,7 +955,7 @@ export function FilesPage() {
             ? t("home.delete.cancelledWithCount", { count: succeeded, unit })
             : t("home.delete.cancelled"),
         );
-        return;
+        return false;
       }
       if (failed.length === 0) {
         toast.success(
@@ -967,6 +971,7 @@ export function FilesPage() {
             .join("\n"),
         });
       }
+      return failed.length === 0;
     },
     [clearSelection, groupsFor, t],
   );
@@ -1183,9 +1188,9 @@ export function FilesPage() {
 
   const handleViewerAction = useCallback(
     (entry: FileEntry, action: ViewerAction) => {
-      // Le visionneur reste monté : seules les actions qui font disparaître
-      // le fichier de l'écran (suppression) ou qui changent de dossier le
-      // ferment. Tout le reste s'ouvre par-dessus, lecture conservée.
+      // Le visionneur reste monté : toutes les feuilles (confirmation de
+      // suppression comprise) s'ouvrent par-dessus, lecture conservée. La
+      // suppression enchaîne ensuite sur l'image suivante sans quitter.
       switch (action) {
         case "share":
           runShare([entry]);
@@ -1203,8 +1208,8 @@ export function FilesPage() {
           void startTransferFlow("move", [entry]);
           break;
         case "delete":
-          setViewerName(null);
-          setDialog({ kind: "confirmDelete", entries: [entry] });
+          setDeleteForever(false);
+          setDialog({ kind: "confirmDelete", entries: [entry], fromViewer: true });
           break;
         case "compress":
           setDialog({ kind: "archiveCreate", entries: [entry] });
@@ -1361,26 +1366,64 @@ export function FilesPage() {
         open={dialog.kind === "confirmDelete"}
         title={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).title
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).title
             : ""
         }
         danger
         confirmLabel={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).confirmLabel
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).confirmLabel
             : ""
         }
         description={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).description
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).description
             : null
         }
-        onCancel={() => setDialog({ kind: "none" })}
+        extra={
+          dialog.kind === "confirmDelete" && dialog.fromViewer ? (
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-2 p-3.5 text-[14px] font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={deleteForever}
+                onChange={(e) => setDeleteForever(e.target.checked)}
+                className="h-5 w-5 shrink-0 accent-primary"
+              />
+              {t("copy.confirm.deleteForever.toggle")}
+            </label>
+          ) : undefined
+        }
+        onCancel={() => {
+          setDialog({ kind: "none" });
+          setDeleteForever(false);
+        }}
         onConfirm={async () => {
           if (dialog.kind !== "confirmDelete") return;
-          const entries = dialog.entries;
+          const { entries, fromViewer } = dialog;
+          const permanent = fromViewer === true && deleteForever;
           setDialog({ kind: "none" });
-          await runDelete(entries);
+          setDeleteForever(false);
+          // Image à afficher ensuite : la suivante, sinon la précédente,
+          // sinon le lecteur se ferme (fin de galerie).
+          let nextName: string | null = null;
+          if (fromViewer && entries.length === 1) {
+            const idx = sortedEntries.findIndex((e) => e.name === entries[0].name);
+            if (idx >= 0) nextName = sortedEntries[idx + 1]?.name ?? sortedEntries[idx - 1]?.name ?? null;
+          }
+          const ok = await runDelete(entries, { permanent });
+          // Le retrait de la liste se fait par patch local pendant
+          // runDelete : la bascule vers l'image suivante est immédiate,
+          // sans rechargement ni retour arrière.
+          if (fromViewer && ok) setViewerName(nextName);
         }}
       />
 

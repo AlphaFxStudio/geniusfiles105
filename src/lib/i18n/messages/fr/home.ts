@@ -7,7 +7,7 @@ export default {
   "home.greeting.morning": "Bonjour",
   "home.greeting.afternoon": "Bon après-midi",
   "home.greeting.evening": "Bonsoir",
-  "home.subtitle.default": "Gérez vos fichiers plus rapidement.",
+  "home.subtitle.default": "Vos fichiers, simplement à portée de main.",
   "home.subtitle.pick": "Accédez au stockage ou aux catégories ci-dessous pour sélectionner.",
 
   "home.title.files": "Fichiers",

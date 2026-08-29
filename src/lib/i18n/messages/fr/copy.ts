@@ -17,6 +17,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "Cette suppression est définitive : les éléments ne pourront plus être récupérés.",
   "copy.confirm.deleteForever.confirmLabel": "Supprimer définitivement",
+  "copy.confirm.deleteForever.toggle": "Supprimer définitivement",
 
   "copy.confirm.emptyTrash.title": "Vider la corbeille ?",
   "copy.confirm.emptyTrash.description_one":

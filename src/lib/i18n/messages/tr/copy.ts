@@ -12,6 +12,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "Bu işlem kalıcıdır: Bu ögeler sonradan geri getirilemez.",
   "copy.confirm.deleteForever.confirmLabel": "Kalıcı olarak sil",
+  "copy.confirm.deleteForever.toggle": "Kalıcı olarak sil",
   "copy.confirm.emptyTrash.title": "Çöp kutusu boşaltılsın mı?",
   "copy.confirm.emptyTrash.description_one":
     "{count} öge cihazınızdan kalıcı olarak silinecek. Bu işlem geri alınamaz.",
