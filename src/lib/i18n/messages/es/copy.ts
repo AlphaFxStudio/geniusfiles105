@@ -17,6 +17,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "Esta eliminación es permanente: estos elementos no se podrán recuperar después.",
   "copy.confirm.deleteForever.confirmLabel": "Eliminar definitivamente",
+  "copy.confirm.deleteForever.toggle": "Eliminar definitivamente",
 
   "copy.confirm.emptyTrash.title": "¿Vaciar la papelera?",
   "copy.confirm.emptyTrash.description_one":

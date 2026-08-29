@@ -17,6 +17,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "Diese Löschung ist endgültig: Diese Elemente können danach nicht wiederhergestellt werden.",
   "copy.confirm.deleteForever.confirmLabel": "Endgültig löschen",
+  "copy.confirm.deleteForever.toggle": "Endgültig löschen",
 
   "copy.confirm.emptyTrash.title": "Papierkorb leeren?",
   "copy.confirm.emptyTrash.description_one":

@@ -17,6 +17,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "This deletion is permanent: these items can't be recovered afterwards.",
   "copy.confirm.deleteForever.confirmLabel": "Delete permanently",
+  "copy.confirm.deleteForever.toggle": "Delete permanently",
 
   "copy.confirm.emptyTrash.title": "Empty the trash?",
   "copy.confirm.emptyTrash.description_one":

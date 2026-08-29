@@ -12,6 +12,7 @@ export default {
   "copy.confirm.deleteForever.description":
     "Esta eliminação é definitiva: os itens não poderão ser recuperados.",
   "copy.confirm.deleteForever.confirmLabel": "Eliminar definitivamente",
+  "copy.confirm.deleteForever.toggle": "Excluir permanentemente",
   "copy.confirm.emptyTrash.title": "Esvaziar a reciclagem?",
   "copy.confirm.emptyTrash.description_one":
     "{count} item será eliminado definitivamente do seu dispositivo. Esta ação não pode ser desfeita.",
