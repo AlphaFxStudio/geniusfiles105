@@ -7,7 +7,7 @@ export default {
   "home.greeting.morning": "Günaydın",
   "home.greeting.afternoon": "Tünaydın",
   "home.greeting.evening": "İyi akşamlar",
-  "home.subtitle.default": "Dosyalarınızı daha hızlı yönetin.",
+  "home.subtitle.default": "Dosyalarınız, her an elinizin altında.",
   "home.subtitle.pick": "Seçim yapmak için aşağıdan bir depolama alanı veya kategori açın.",
 
   "home.title.files": "Dosyalar",
