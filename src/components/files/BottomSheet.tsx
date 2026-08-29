@@ -360,6 +360,7 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   danger,
+  extra,
   onCancel,
   onConfirm,
 }: {
@@ -368,6 +369,8 @@ export function ConfirmDialog({
   description: ReactNode;
   confirmLabel?: string;
   danger?: boolean;
+  /** Contenu complémentaire (ex. case « Supprimer définitivement »). */
+  extra?: ReactNode;
   onCancel: () => void;
   onConfirm: () => void | Promise<void>;
 }) {
@@ -399,6 +402,7 @@ export function ConfirmDialog({
       }
     >
       <div className="text-[15px] leading-relaxed text-muted-foreground">{description}</div>
+      {extra}
     </BottomSheet>
   );
 }
