@@ -1188,9 +1188,9 @@ export function FilesPage() {
 
   const handleViewerAction = useCallback(
     (entry: FileEntry, action: ViewerAction) => {
-      // Le visionneur reste monté : seules les actions qui font disparaître
-      // le fichier de l'écran (suppression) ou qui changent de dossier le
-      // ferment. Tout le reste s'ouvre par-dessus, lecture conservée.
+      // Le visionneur reste monté : toutes les feuilles (confirmation de
+      // suppression comprise) s'ouvrent par-dessus, lecture conservée. La
+      // suppression enchaîne ensuite sur l'image suivante sans quitter.
       switch (action) {
         case "share":
           runShare([entry]);
@@ -1208,8 +1208,8 @@ export function FilesPage() {
           void startTransferFlow("move", [entry]);
           break;
         case "delete":
-          setViewerName(null);
-          setDialog({ kind: "confirmDelete", entries: [entry] });
+          setDeleteForever(false);
+          setDialog({ kind: "confirmDelete", entries: [entry], fromViewer: true });
           break;
         case "compress":
           setDialog({ kind: "archiveCreate", entries: [entry] });
@@ -1366,26 +1366,64 @@ export function FilesPage() {
         open={dialog.kind === "confirmDelete"}
         title={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).title
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).title
             : ""
         }
         danger
         confirmLabel={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).confirmLabel
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).confirmLabel
             : ""
         }
         description={
           dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.entries.length).description
+            ? (dialog.fromViewer && deleteForever
+                ? confirmCopy.deleteForever(dialog.entries.length)
+                : confirmCopy.moveToTrash(dialog.entries.length)
+              ).description
             : null
         }
-        onCancel={() => setDialog({ kind: "none" })}
+        extra={
+          dialog.kind === "confirmDelete" && dialog.fromViewer ? (
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-2 p-3.5 text-[14px] font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={deleteForever}
+                onChange={(e) => setDeleteForever(e.target.checked)}
+                className="h-5 w-5 shrink-0 accent-primary"
+              />
+              {t("copy.confirm.deleteForever.toggle")}
+            </label>
+          ) : undefined
+        }
+        onCancel={() => {
+          setDialog({ kind: "none" });
+          setDeleteForever(false);
+        }}
         onConfirm={async () => {
           if (dialog.kind !== "confirmDelete") return;
-          const entries = dialog.entries;
+          const { entries, fromViewer } = dialog;
+          const permanent = fromViewer === true && deleteForever;
           setDialog({ kind: "none" });
-          await runDelete(entries);
+          setDeleteForever(false);
+          // Image à afficher ensuite : la suivante, sinon la précédente,
+          // sinon le lecteur se ferme (fin de galerie).
+          let nextName: string | null = null;
+          if (fromViewer && entries.length === 1) {
+            const idx = sortedEntries.findIndex((e) => e.name === entries[0].name);
+            if (idx >= 0) nextName = sortedEntries[idx + 1]?.name ?? sortedEntries[idx - 1]?.name ?? null;
+          }
+          const ok = await runDelete(entries, { permanent });
+          // Le retrait de la liste se fait par patch local pendant
+          // runDelete : la bascule vers l'image suivante est immédiate,
+          // sans rechargement ni retour arrière.
+          if (fromViewer && ok) setViewerName(nextName);
         }}
       />
 
