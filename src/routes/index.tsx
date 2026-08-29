@@ -227,7 +227,7 @@ type ActiveDialog =
   | { kind: "newFolder" }
   | { kind: "rename"; entry: FileEntry }
   | { kind: "details"; info: DetailsInfo | null; loading: boolean }
-  | { kind: "confirmDelete"; entries: FileEntry[] }
+  | { kind: "confirmDelete"; entries: FileEntry[]; fromViewer?: boolean }
   | { kind: "actions"; entry: FileEntry }
   | { kind: "archiveCreate"; entries: FileEntry[] }
   | {
@@ -292,6 +292,9 @@ export function FilesPage() {
    * la vidéo (plus de fermeture intempestive ni de perte de position).
    */
   const [viewerName, setViewerName] = useState<string | null>(null);
+  // Case « Supprimer définitivement » du dialogue de suppression ouvert
+  // depuis le lecteur : décochée = corbeille, cochée = destruction.
+  const [deleteForever, setDeleteForever] = useState(false);
 
   const [dialog, setDialog] = useState<ActiveDialog>({ kind: "none" });
   const [moreOpen, setMoreOpen] = useState(false);
@@ -902,9 +905,9 @@ export function FilesPage() {
   );
 
   const runDelete = useCallback(
-    async (entries: FileEntry[]) => {
+    async (entries: FileEntry[], opts?: { permanent?: boolean }): Promise<boolean> => {
       const groups = groupsFor(entries);
-      if (groups.length === 0) return;
+      if (groups.length === 0) return true;
       const unit = unitFor(entries);
       let succeeded = 0;
       const failed: { name: string; reason?: string }[] = [];
@@ -929,6 +932,7 @@ export function FilesPage() {
           }
           const res = await deleteEntries(group.parent, group.entries, {
             signal,
+            permanent: opts?.permanent,
             onProgress: heavy ? (p) => setProgress(p) : undefined,
           });
           succeeded += res.succeeded ?? 0;
@@ -951,7 +955,7 @@ export function FilesPage() {
             ? t("home.delete.cancelledWithCount", { count: succeeded, unit })
             : t("home.delete.cancelled"),
         );
-        return;
+        return false;
       }
       if (failed.length === 0) {
         toast.success(
@@ -967,6 +971,7 @@ export function FilesPage() {
             .join("\n"),
         });
       }
+      return failed.length === 0;
     },
     [clearSelection, groupsFor, t],
   );
