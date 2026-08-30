@@ -1417,7 +1417,7 @@ export function FilesPage() {
         onConfirm={async () => {
           if (dialog.kind !== "confirmDelete") return;
           const { entries, fromViewer } = dialog;
-          const permanent = fromViewer === true && deleteForever;
+          const permanent = deleteForever;
           setDialog({ kind: "none" });
           setDeleteForever(false);
           // Image à afficher ensuite : la suivante, sinon la précédente,
