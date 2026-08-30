@@ -1417,7 +1417,8 @@ export function FilesPage() {
           let nextName: string | null = null;
           if (fromViewer && entries.length === 1) {
             const idx = sortedEntries.findIndex((e) => e.name === entries[0].name);
-            if (idx >= 0) nextName = sortedEntries[idx + 1]?.name ?? sortedEntries[idx - 1]?.name ?? null;
+            if (idx >= 0)
+              nextName = sortedEntries[idx + 1]?.name ?? sortedEntries[idx - 1]?.name ?? null;
           }
           const ok = await runDelete(entries, { permanent });
           // Le retrait de la liste se fait par patch local pendant
