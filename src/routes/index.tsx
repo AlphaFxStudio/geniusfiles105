@@ -29,7 +29,7 @@ import {
   AudioWaveform,
 } from "@/components/icons";
 
-import { FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
+import { Check, FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
 import {
   GfApps,
   GfAudioEditor,
@@ -1366,7 +1366,7 @@ export function FilesPage() {
         open={dialog.kind === "confirmDelete"}
         title={
           dialog.kind === "confirmDelete"
-            ? (dialog.fromViewer && deleteForever
+            ? (deleteForever
                 ? confirmCopy.deleteForever(dialog.entries.length)
                 : confirmCopy.moveToTrash(dialog.entries.length)
               ).title
@@ -1375,7 +1375,7 @@ export function FilesPage() {
         danger
         confirmLabel={
           dialog.kind === "confirmDelete"
-            ? (dialog.fromViewer && deleteForever
+            ? (deleteForever
                 ? confirmCopy.deleteForever(dialog.entries.length)
                 : confirmCopy.moveToTrash(dialog.entries.length)
               ).confirmLabel
@@ -1383,21 +1383,29 @@ export function FilesPage() {
         }
         description={
           dialog.kind === "confirmDelete"
-            ? (dialog.fromViewer && deleteForever
+            ? (deleteForever
                 ? confirmCopy.deleteForever(dialog.entries.length)
                 : confirmCopy.moveToTrash(dialog.entries.length)
               ).description
             : null
         }
         extra={
-          dialog.kind === "confirmDelete" && dialog.fromViewer ? (
-            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-2 p-3.5 text-[14px] font-medium text-foreground">
-              <input
-                type="checkbox"
-                checked={deleteForever}
-                onChange={(e) => setDeleteForever(e.target.checked)}
-                className="h-5 w-5 shrink-0 accent-primary"
-              />
+          dialog.kind === "confirmDelete" ? (
+            <label
+              className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-surface-2 p-3.5 text-[14px] font-medium text-foreground"
+              onClick={() => setDeleteForever(!deleteForever)}
+            >
+              <span
+                role="checkbox"
+                aria-checked={deleteForever}
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors ${
+                  deleteForever
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted-foreground/50 bg-surface"
+                }`}
+              >
+                {deleteForever ? <Check className="h-4 w-4" strokeWidth={3} /> : null}
+              </span>
               {t("copy.confirm.deleteForever.toggle")}
             </label>
           ) : undefined
@@ -1409,7 +1417,7 @@ export function FilesPage() {
         onConfirm={async () => {
           if (dialog.kind !== "confirmDelete") return;
           const { entries, fromViewer } = dialog;
-          const permanent = fromViewer === true && deleteForever;
+          const permanent = deleteForever;
           setDialog({ kind: "none" });
           setDeleteForever(false);
           // Image à afficher ensuite : la suivante, sinon la précédente,
