@@ -29,7 +29,7 @@ import {
   AudioWaveform,
 } from "@/components/icons";
 
-import { FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
+import { Check, FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
 import {
   GfApps,
   GfAudioEditor,
