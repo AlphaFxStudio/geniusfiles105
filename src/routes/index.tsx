@@ -29,7 +29,7 @@ import {
   AudioWaveform,
 } from "@/components/icons";
 
-import { Check, FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
+import { FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
 import {
   GfApps,
   GfAudioEditor,
@@ -79,7 +79,8 @@ import { SelectionBar } from "@/components/files/SelectionBar";
 import { MoreActionsSheet } from "@/components/files/MoreActionsSheet";
 import { buildMoreActions } from "@/lib/files/selection-actions";
 import { EntryActionSheet, type EntryAction } from "@/components/files/EntryActionSheet";
-import { ConfirmDialog, NamePrompt } from "@/components/files/BottomSheet";
+import { NamePrompt } from "@/components/files/BottomSheet";
+import { DeleteConfirmDialog } from "@/components/files/DeleteConfirmDialog";
 import { DetailsSheet } from "@/components/files/DetailsSheet";
 import { ProgressDialog } from "@/components/files/ProgressDialog";
 import { startTransfer, cancelTransfer, openTransferDestination } from "@/lib/transfers/manager";
@@ -109,6 +110,7 @@ import { useLiveListing } from "@/lib/files/live-sync";
 import { warmThumbnails } from "@/lib/native/thumbnails";
 import { listInstalledApps } from "@/lib/apps/api";
 import { consumeFileJump, FILE_JUMP_EVENT, type FileJumpTarget } from "@/lib/files/deeplink";
+import { revealEntry } from "@/lib/files/reveal";
 
 import { useRoots } from "@/lib/fs/useRoots";
 import { sortEntries } from "@/lib/files/sort";
@@ -136,7 +138,7 @@ import type {
   ViewMode,
 } from "@/lib/files/types";
 import { openStoragePermissionSettings } from "@/lib/native/storage-permission";
-import { confirmCopy, summarize, progressLabel } from "@/lib/copy";
+import { summarize, progressLabel } from "@/lib/copy";
 import {
   useSelection,
   selectionEntries,
@@ -294,7 +296,6 @@ export function FilesPage() {
   const [viewerName, setViewerName] = useState<string | null>(null);
   // Case « Supprimer définitivement » du dialogue de suppression ouvert
   // depuis le lecteur : décochée = corbeille, cochée = destruction.
-  const [deleteForever, setDeleteForever] = useState(false);
 
   const [dialog, setDialog] = useState<ActiveDialog>({ kind: "none" });
   const [moreOpen, setMoreOpen] = useState(false);
