@@ -1373,6 +1373,8 @@ async function shareEntriesImpl(
 export type DetailsInfo = {
   name: string;
   path: string;
+  /** Dossier parent réel : permet « Ouvrir l'emplacement ». */
+  parent: PathRef;
   isDirectory: boolean;
   size?: number;
   mtime?: number;
@@ -1384,12 +1386,14 @@ export async function readDetails(parent: PathRef, entry: FileEntry): Promise<De
   const base: DetailsInfo = {
     name: entry.name,
     path: joinAbs(toAbsolutePath(parent), entry.name),
+    parent: { rootId: parent.rootId, segments: [...parent.segments] },
     isDirectory: entry.isDirectory,
     size: entry.size,
     mtime: entry.mtime,
     ext: entry.ext ?? extOf(entry.name),
   };
   if (isAndroidNative()) {
+
     const p = nativePlugin();
     if (!p) return base;
     try {

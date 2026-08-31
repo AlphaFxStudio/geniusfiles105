@@ -29,7 +29,7 @@ import {
   AudioWaveform,
 } from "@/components/icons";
 
-import { Check, FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
+import { FileArchive, Package, Zap, Sparkles, Folder } from "@/components/icons";
 import {
   GfApps,
   GfAudioEditor,
@@ -79,7 +79,8 @@ import { SelectionBar } from "@/components/files/SelectionBar";
 import { MoreActionsSheet } from "@/components/files/MoreActionsSheet";
 import { buildMoreActions } from "@/lib/files/selection-actions";
 import { EntryActionSheet, type EntryAction } from "@/components/files/EntryActionSheet";
-import { ConfirmDialog, NamePrompt } from "@/components/files/BottomSheet";
+import { NamePrompt } from "@/components/files/BottomSheet";
+import { DeleteConfirmDialog } from "@/components/files/DeleteConfirmDialog";
 import { DetailsSheet } from "@/components/files/DetailsSheet";
 import { ProgressDialog } from "@/components/files/ProgressDialog";
 import { startTransfer, cancelTransfer, openTransferDestination } from "@/lib/transfers/manager";
@@ -109,6 +110,7 @@ import { useLiveListing } from "@/lib/files/live-sync";
 import { warmThumbnails } from "@/lib/native/thumbnails";
 import { listInstalledApps } from "@/lib/apps/api";
 import { consumeFileJump, FILE_JUMP_EVENT, type FileJumpTarget } from "@/lib/files/deeplink";
+import { revealEntry } from "@/lib/files/reveal";
 
 import { useRoots } from "@/lib/fs/useRoots";
 import { sortEntries } from "@/lib/files/sort";
@@ -136,7 +138,7 @@ import type {
   ViewMode,
 } from "@/lib/files/types";
 import { openStoragePermissionSettings } from "@/lib/native/storage-permission";
-import { confirmCopy, summarize, progressLabel } from "@/lib/copy";
+import { summarize, progressLabel } from "@/lib/copy";
 import {
   useSelection,
   selectionEntries,
@@ -294,12 +296,14 @@ export function FilesPage() {
   const [viewerName, setViewerName] = useState<string | null>(null);
   // Case « Supprimer définitivement » du dialogue de suppression ouvert
   // depuis le lecteur : décochée = corbeille, cochée = destruction.
-  const [deleteForever, setDeleteForever] = useState(false);
 
   const [dialog, setDialog] = useState<ActiveDialog>({ kind: "none" });
   const [moreOpen, setMoreOpen] = useState(false);
   // Fichier ciblé par un lien profond, en attente du chargement du dossier.
   const [pendingFocus, setPendingFocus] = useState<{ name: string; open: boolean } | null>(null);
+  // Liste affichée, lisible depuis les effets déclarés plus haut.
+  const sortedEntriesRef = useRef<FileEntry[]>([]);
+
 
   // Progress dialog state — dedicated so a long op can keep running while
   // the picker/confirm sheets close.
@@ -512,16 +516,17 @@ export function FilesPage() {
       return;
     }
     replaceSelection(path, [entry]);
-    requestAnimationFrame(() => {
-      document
-        .querySelector(`[data-entry-name="${CSS.escape(entry.name)}"]`)
-        ?.scrollIntoView({ block: "center", behavior: "smooth" });
-    });
+    // Défilement fiable même très loin dans la liste (virtualisation) et
+    // mise en évidence temporaire de l'élément recherché.
+    const index = sortedEntriesRef.current.findIndex((e) => e.name === entry.name);
+    revealEntry(entry.name, index >= 0 ? index : undefined);
     if (pendingFocus.open) {
       if (canPreview(entry)) setViewerName(entry.name);
       else void openWithSystem(path, entry);
     }
   }, [pendingFocus, listing, path, t]);
+
+
 
   const currentTitle = path
     ? (path.segments[path.segments.length - 1] ??
@@ -710,6 +715,8 @@ export function FilesPage() {
       : listing.entries;
     return sortEntries(base, sortKey, sortOrder, foldersFirst);
   }, [listing, query, sortKey, sortOrder, foldersFirst]);
+  sortedEntriesRef.current = sortedEntries;
+
 
   const selectedEntries = useMemo(() => selectionEntries(selection), [selection]);
 
@@ -1362,65 +1369,15 @@ export function FilesPage() {
         }}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmDialog
         open={dialog.kind === "confirmDelete"}
-        title={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).title
-            : ""
-        }
-        danger
-        confirmLabel={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).confirmLabel
-            : ""
-        }
-        description={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).description
-            : null
-        }
-        extra={
-          dialog.kind === "confirmDelete" ? (
-            <label
-              className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-surface-2 p-3.5 text-[14px] font-medium text-foreground"
-              onClick={() => setDeleteForever(!deleteForever)}
-            >
-              <span
-                role="checkbox"
-                aria-checked={deleteForever}
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors ${
-                  deleteForever
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/50 bg-surface"
-                }`}
-              >
-                {deleteForever ? <Check className="h-4 w-4" strokeWidth={3} /> : null}
-              </span>
-              {t("copy.confirm.deleteForever.toggle")}
-            </label>
-          ) : undefined
-        }
-        onCancel={() => {
-          setDialog({ kind: "none" });
-          setDeleteForever(false);
-        }}
-        onConfirm={async () => {
+        count={dialog.kind === "confirmDelete" ? dialog.entries.length : 0}
+        onCancel={() => setDialog({ kind: "none" })}
+        onConfirm={async (permanent) => {
           if (dialog.kind !== "confirmDelete") return;
           const { entries, fromViewer } = dialog;
-          const permanent = deleteForever;
           setDialog({ kind: "none" });
-          setDeleteForever(false);
-          // Image à afficher ensuite : la suivante, sinon la précédente,
+          // Élément à afficher ensuite : le suivant, sinon le précédent,
           // sinon le lecteur se ferme (fin de galerie).
           let nextName: string | null = null;
           if (fromViewer && entries.length === 1) {
@@ -1430,11 +1387,12 @@ export function FilesPage() {
           }
           const ok = await runDelete(entries, { permanent });
           // Le retrait de la liste se fait par patch local pendant
-          // runDelete : la bascule vers l'image suivante est immédiate,
+          // runDelete : la bascule vers l'élément suivant est immédiate,
           // sans rechargement ni retour arrière.
           if (fromViewer && ok) setViewerName(nextName);
         }}
       />
+
 
       <DetailsSheet
         open={dialog.kind === "details"}

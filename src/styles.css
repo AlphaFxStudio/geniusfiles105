@@ -1695,3 +1695,31 @@ svg.gf-icon.h-14,
 svg.gf-icon.h-16 {
   stroke-width: 1.8;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   « Ouvrir l'emplacement » : l'élément recherché clignote
+   brièvement pour que l'utilisateur le repère immédiatement,
+   puis l'effet disparaît de lui-même.
+   ───────────────────────────────────────────────────────────── */
+@keyframes gf-reveal-flash {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  20%,
+  60% {
+    background-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  }
+}
+
+.gf-reveal-flash {
+  animation: gf-reveal-flash 0.9s ease-in-out 2;
+  border-radius: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gf-reveal-flash {
+    animation: none;
+    background-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+}
