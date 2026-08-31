@@ -22,6 +22,9 @@ export default {
   "files.details.content": "Inhalt",
   "files.details.modified": "Geändert",
   "files.details.extension": "Erweiterung",
+  "files.details.name": "Name",
+  "files.details.type": "Typ",
+  "files.details.openLocation": "Speicherort öffnen",
 
   "files.actions.installApp": "App installieren",
   "files.actions.openPackage": "Paket öffnen",

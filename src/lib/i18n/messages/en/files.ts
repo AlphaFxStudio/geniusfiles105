@@ -22,6 +22,9 @@ export default {
   "files.details.content": "Content",
   "files.details.modified": "Modified",
   "files.details.extension": "Extension",
+  "files.details.name": "Name",
+  "files.details.type": "Type",
+  "files.details.openLocation": "Open location",
 
   "files.actions.installApp": "Install app",
   "files.actions.openPackage": "Open package",
