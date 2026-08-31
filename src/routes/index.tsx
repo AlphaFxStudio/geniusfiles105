@@ -300,6 +300,9 @@ export function FilesPage() {
   const [moreOpen, setMoreOpen] = useState(false);
   // Fichier ciblé par un lien profond, en attente du chargement du dossier.
   const [pendingFocus, setPendingFocus] = useState<{ name: string; open: boolean } | null>(null);
+  // Liste affichée, lisible depuis les effets déclarés plus haut.
+  const sortedEntriesRef = useRef<FileEntry[]>([]);
+
 
   // Progress dialog state — dedicated so a long op can keep running while
   // the picker/confirm sheets close.
