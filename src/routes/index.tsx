@@ -714,6 +714,8 @@ export function FilesPage() {
       : listing.entries;
     return sortEntries(base, sortKey, sortOrder, foldersFirst);
   }, [listing, query, sortKey, sortOrder, foldersFirst]);
+  sortedEntriesRef.current = sortedEntries;
+
 
   const selectedEntries = useMemo(() => selectionEntries(selection), [selection]);
 
