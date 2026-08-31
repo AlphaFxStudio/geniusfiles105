@@ -1368,65 +1368,15 @@ export function FilesPage() {
         }}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmDialog
         open={dialog.kind === "confirmDelete"}
-        title={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).title
-            : ""
-        }
-        danger
-        confirmLabel={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).confirmLabel
-            : ""
-        }
-        description={
-          dialog.kind === "confirmDelete"
-            ? (deleteForever
-                ? confirmCopy.deleteForever(dialog.entries.length)
-                : confirmCopy.moveToTrash(dialog.entries.length)
-              ).description
-            : null
-        }
-        extra={
-          dialog.kind === "confirmDelete" ? (
-            <label
-              className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-surface-2 p-3.5 text-[14px] font-medium text-foreground"
-              onClick={() => setDeleteForever(!deleteForever)}
-            >
-              <span
-                role="checkbox"
-                aria-checked={deleteForever}
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-colors ${
-                  deleteForever
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/50 bg-surface"
-                }`}
-              >
-                {deleteForever ? <Check className="h-4 w-4" strokeWidth={3} /> : null}
-              </span>
-              {t("copy.confirm.deleteForever.toggle")}
-            </label>
-          ) : undefined
-        }
-        onCancel={() => {
-          setDialog({ kind: "none" });
-          setDeleteForever(false);
-        }}
-        onConfirm={async () => {
+        count={dialog.kind === "confirmDelete" ? dialog.entries.length : 0}
+        onCancel={() => setDialog({ kind: "none" })}
+        onConfirm={async (permanent) => {
           if (dialog.kind !== "confirmDelete") return;
           const { entries, fromViewer } = dialog;
-          const permanent = deleteForever;
           setDialog({ kind: "none" });
-          setDeleteForever(false);
-          // Image à afficher ensuite : la suivante, sinon la précédente,
+          // Élément à afficher ensuite : le suivant, sinon le précédent,
           // sinon le lecteur se ferme (fin de galerie).
           let nextName: string | null = null;
           if (fromViewer && entries.length === 1) {
@@ -1436,11 +1386,12 @@ export function FilesPage() {
           }
           const ok = await runDelete(entries, { permanent });
           // Le retrait de la liste se fait par patch local pendant
-          // runDelete : la bascule vers l'image suivante est immédiate,
+          // runDelete : la bascule vers l'élément suivant est immédiate,
           // sans rechargement ni retour arrière.
           if (fromViewer && ok) setViewerName(nextName);
         }}
       />
+
 
       <DetailsSheet
         open={dialog.kind === "details"}
