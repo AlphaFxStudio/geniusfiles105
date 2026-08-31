@@ -514,13 +514,14 @@ export function FilesPage() {
     replaceSelection(path, [entry]);
     // Défilement fiable même très loin dans la liste (virtualisation) et
     // mise en évidence temporaire de l'élément recherché.
-    const index = sortedEntries.findIndex((e) => e.name === entry.name);
+    const index = sortedEntriesRef.current.findIndex((e) => e.name === entry.name);
     revealEntry(entry.name, index >= 0 ? index : undefined);
     if (pendingFocus.open) {
       if (canPreview(entry)) setViewerName(entry.name);
       else void openWithSystem(path, entry);
     }
-  }, [pendingFocus, listing, path, t, sortedEntries]);
+  }, [pendingFocus, listing, path, t]);
+
 
 
   const currentTitle = path
