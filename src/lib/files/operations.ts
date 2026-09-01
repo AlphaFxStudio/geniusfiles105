@@ -1393,7 +1393,6 @@ export async function readDetails(parent: PathRef, entry: FileEntry): Promise<De
     ext: entry.ext ?? extOf(entry.name),
   };
   if (isAndroidNative()) {
-
     const p = nativePlugin();
     if (!p) return base;
     try {
