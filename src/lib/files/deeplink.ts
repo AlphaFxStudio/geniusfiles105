@@ -10,6 +10,7 @@
  * la page Recherche.
  */
 import type { PathRef, StorageRootId } from "@/lib/files/types";
+import { markRevealPending } from "@/lib/files/reveal";
 
 export const FILE_JUMP_EVENT = "gf:files:jump";
 const KEY = "gf.files.jumpTo";
@@ -38,6 +39,9 @@ export function requestFileJump(target: FileJumpTarget | PathRef): void {
     file: (target as FileJumpTarget).file,
     open: (target as FileJumpTarget).open,
   };
+  // Un fichier ciblé sera mis en évidence : la mémoire de position des
+  // listes doit laisser la main au défilement vers cet élément.
+  if (payload.file) markRevealPending();
   try {
     window.sessionStorage.setItem(KEY, JSON.stringify(payload));
   } catch {

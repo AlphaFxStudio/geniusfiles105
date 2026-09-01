@@ -30,6 +30,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { forgetScrollFor, saveScrollFor, takeScrollFor } from "./scroll-memory";
+import { isRevealPending } from "./reveal";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -103,6 +104,15 @@ export function useListScrollMemory(key: string, ready: boolean): void {
   useIsoLayoutEffect(() => {
     if (typeof window === "undefined") return;
     if (!ready || settled.current) return;
+
+    /* Une mise en évidence est demandée (« Ouvrir l'emplacement ») : la
+       position cible appartient à l'élément recherché, pas à la mémoire
+       de la liste. On rend la main immédiatement. */
+    if (isRevealPending()) {
+      settled.current = true;
+      saving.current = true;
+      return;
+    }
 
     const root = scrollRootFor();
     const y = target.current ?? 0;
