@@ -1215,7 +1215,6 @@ export function FilesPage() {
           void startTransferFlow("move", [entry]);
           break;
         case "delete":
-          setDeleteForever(false);
           setDialog({ kind: "confirmDelete", entries: [entry], fromViewer: true });
           break;
         case "compress":
