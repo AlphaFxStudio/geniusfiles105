@@ -30,7 +30,8 @@ import { BACK_PRIORITY, useBackHandler } from "@/lib/navigation/back-stack";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { InlineAdBanner } from "@/components/ads/InlineAdBanner";
 import { IllustratedEmptyState } from "@/components/ui/IllustratedEmptyState";
-import { BottomSheet, ConfirmDialog, NamePrompt } from "@/components/files/BottomSheet";
+import { BottomSheet, NamePrompt } from "@/components/files/BottomSheet";
+import { DeleteConfirmDialog } from "@/components/files/DeleteConfirmDialog";
 import { FileGridView, FileListView } from "@/components/files/FileList";
 import { SelectionBar, SelectionTopBar } from "@/components/files/SelectionBar";
 import { MoreActionsSheet } from "@/components/files/MoreActionsSheet";
@@ -45,7 +46,7 @@ import { openPackageSheet } from "@/lib/files/package-sheet-store";
 import { openWithSystem } from "@/lib/viewer/openWith";
 import { audioEditorSearch } from "@/lib/audio/routes";
 import { batchSummary, errorMessage } from "@/lib/errors/humanize";
-import { confirmCopy, progressLabel } from "@/lib/copy";
+import { progressLabel } from "@/lib/copy";
 import { formatSize } from "@/lib/files/format";
 import { useSelectionSize } from "@/lib/files/selection-size";
 import { loadView } from "@/lib/files/preferences";
@@ -153,7 +154,7 @@ type Dialog =
   | { kind: "actions"; entry: SearchResult }
   | { kind: "details"; info: DetailsInfo | null; loading: boolean }
   | { kind: "rename"; entry: SearchResult }
-  | { kind: "confirmDelete"; items: SearchResult[] }
+  | { kind: "confirmDelete"; items: SearchResult[]; viewerId?: string }
   | { kind: "viewer"; entryId: string };
 
 function resultId(r: SearchResult): string {
@@ -600,21 +601,26 @@ export function SearchPage() {
   );
 
   const doDelete = useCallback(
-    async (items: SearchResult[]) => {
+    async (items: SearchResult[], permanent = false) => {
       let ok = 0;
       let failed = 0;
       const removed = new Set(items.map(resultId));
       for (const g of groupByParent(items)) {
-        const r = await deleteEntries(g.parent, g.entries);
+        const r = await deleteEntries(g.parent, g.entries, { permanent });
         ok += r.succeeded;
         failed += r.failed.length;
       }
       clearSelection();
       setResults((prev) => prev.filter((r) => !removed.has(resultId(r))));
       refreshAfterMutation();
-      const s = batchSummary(t("files.recent.movedToTrashVerb"), ok, failed);
+      const s = batchSummary(
+        permanent ? t("action.deleteForever") : t("files.recent.movedToTrashVerb"),
+        ok,
+        failed,
+      );
       if (s.ok) toast.success(s.message);
       else toast.error(s.message);
+      return ok > 0;
     },
     [clearSelection, refreshAfterMutation, t],
   );
@@ -781,10 +787,18 @@ export function SearchPage() {
   );
 
   const viewerEntries = useMemo(() => results.filter((r) => canOpenInViewer(r)), [results]);
+  /* Identifiant affiché par le lecteur : il survit à l'ouverture du
+     dialogue de suppression, qui se superpose au lecteur. */
+  const activeViewerId =
+    dialog.kind === "viewer"
+      ? dialog.entryId
+      : dialog.kind === "confirmDelete"
+        ? dialog.viewerId
+        : undefined;
   const viewerIndex = useMemo(() => {
-    if (dialog.kind !== "viewer") return -1;
-    return viewerEntries.findIndex((r) => resultId(r) === dialog.entryId);
-  }, [dialog, viewerEntries]);
+    if (!activeViewerId) return -1;
+    return viewerEntries.findIndex((r) => resultId(r) === activeViewerId);
+  }, [activeViewerId, viewerEntries]);
 
   const activeFilterCount = filtersActive(filters);
   const showRecents = query.trim().length === 0;
@@ -1011,28 +1025,28 @@ export function SearchPage() {
         }}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmDialog
         open={dialog.kind === "confirmDelete"}
-        title={
-          dialog.kind === "confirmDelete" ? confirmCopy.moveToTrash(dialog.items.length).title : ""
-        }
-        description={
-          dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.items.length).description
-            : ""
-        }
-        confirmLabel={
-          dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.items.length).confirmLabel
-            : ""
-        }
-        danger
-        onCancel={() => setDialog({ kind: "none" })}
-        onConfirm={async () => {
+        count={dialog.kind === "confirmDelete" ? dialog.items.length : 0}
+        onCancel={() => {
+          if (dialog.kind === "confirmDelete" && dialog.viewerId)
+            setDialog({ kind: "viewer", entryId: dialog.viewerId });
+          else setDialog({ kind: "none" });
+        }}
+        onConfirm={async (permanent) => {
           if (dialog.kind !== "confirmDelete") return;
-          const items = dialog.items;
+          const { items, viewerId } = dialog;
+          let nextId: string | null = null;
+          if (viewerId) {
+            const idx = viewerEntries.findIndex((r) => resultId(r) === viewerId);
+            if (idx >= 0) {
+              const next = viewerEntries[idx + 1] ?? viewerEntries[idx - 1];
+              nextId = next ? resultId(next) : null;
+            }
+          }
           setDialog({ kind: "none" });
-          await doDelete(items);
+          const ok = await doDelete(items, permanent);
+          if (viewerId && ok && nextId) setDialog({ kind: "viewer", entryId: nextId });
         }}
       />
 
@@ -1043,7 +1057,7 @@ export function SearchPage() {
       />
 
       <UniversalViewer
-        open={dialog.kind === "viewer" && viewerIndex >= 0}
+        open={Boolean(activeViewerId) && viewerIndex >= 0}
         entries={viewerEntries}
         parent={
           viewerEntries[viewerIndex >= 0 ? viewerIndex : 0]

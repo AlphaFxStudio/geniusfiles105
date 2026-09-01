@@ -35,7 +35,8 @@ import { SelectionBar } from "@/components/files/SelectionBar";
 import { MoreActionsSheet } from "@/components/files/MoreActionsSheet";
 import { buildMoreActions } from "@/lib/files/selection-actions";
 import { EntryActionSheet, type EntryAction } from "@/components/files/EntryActionSheet";
-import { ConfirmDialog, NamePrompt } from "@/components/files/BottomSheet";
+import { NamePrompt } from "@/components/files/BottomSheet";
+import { DeleteConfirmDialog } from "@/components/files/DeleteConfirmDialog";
 import { DetailsSheet } from "@/components/files/DetailsSheet";
 import { ProgressDialog } from "@/components/files/ProgressDialog";
 import {
@@ -48,7 +49,7 @@ import { useTransferTask } from "@/lib/transfers/useTransfers";
 import { UniversalViewer, type ViewerAction } from "@/components/viewer/UniversalViewer";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { batchSummary, errorMessage } from "@/lib/errors/humanize";
-import { confirmCopy, progressLabel } from "@/lib/copy";
+import { progressLabel } from "@/lib/copy";
 import { canOpenInViewer, canPreview } from "@/lib/viewer/kinds";
 import { isPackageEntry } from "@/lib/files/package";
 import { openPackageSheet } from "@/lib/files/package-sheet-store";
@@ -138,7 +139,7 @@ type Dialog =
   | { kind: "actions"; entry: FileEntry }
   | { kind: "details"; info: DetailsInfo | null; loading: boolean; parent: PathRef }
   | { kind: "rename"; entry: FileEntry; parent: PathRef }
-  | { kind: "confirmDelete"; items: CategoryFile[] }
+  | { kind: "confirmDelete"; items: CategoryFile[]; viewerName?: string }
   | { kind: "viewer"; entryName: string };
 
 function parentOf(f: CategoryFile): PathRef {
@@ -586,20 +587,25 @@ export function CategoryPage({ kind }: { kind: CategoryKind }) {
   };
 
   const doDelete = useCallback(
-    async (items: CategoryFile[]) => {
+    async (items: CategoryFile[], permanent = false) => {
       const groups = groupByParent(items);
       let ok = 0;
       let failed = 0;
       for (const g of groups) {
-        const r = await deleteEntries(g.parent, g.entries);
+        const r = await deleteEntries(g.parent, g.entries, { permanent });
         ok += r.succeeded;
         failed += r.failed.length;
       }
       clearSelection();
       refreshAfterMutation();
-      const s = batchSummary(t("files.recent.movedToTrashVerb"), ok, failed);
+      const s = batchSummary(
+        permanent ? t("action.deleteForever") : t("files.recent.movedToTrashVerb"),
+        ok,
+        failed,
+      );
       if (s.ok) toast.success(s.message);
       else toast.error(s.message);
+      return ok > 0;
     },
     [clearSelection, t],
   );
@@ -749,7 +755,8 @@ export function CategoryPage({ kind }: { kind: CategoryKind }) {
           await openWithSystem(parent, f);
           break;
         case "delete":
-          setDialog({ kind: "confirmDelete", items: [f] });
+          // Le lecteur reste ouvert : la confirmation s'affiche par-dessus.
+          setDialog({ kind: "confirmDelete", items: [f], viewerName: f.name });
           break;
         case "info": {
           setDialog({ kind: "details", info: null, loading: true, parent });
@@ -776,10 +783,18 @@ export function CategoryPage({ kind }: { kind: CategoryKind }) {
     else if (canOpenInViewer(f)) setDialog({ kind: "viewer", entryName: f.name });
     else setDialog({ kind: "actions", entry: f });
   }, []);
+  /* Nom affiché par le lecteur : il survit à l'ouverture du dialogue de
+     suppression, qui se superpose au lecteur au lieu de le fermer. */
+  const activeViewerName =
+    dialog.kind === "viewer"
+      ? dialog.entryName
+      : dialog.kind === "confirmDelete"
+        ? dialog.viewerName
+        : undefined;
   const viewerIndex = useMemo(() => {
-    if (dialog.kind !== "viewer") return -1;
-    return viewerEntries.findIndex((f) => f.name === dialog.entryName);
-  }, [dialog, viewerEntries]);
+    if (!activeViewerName) return -1;
+    return viewerEntries.findIndex((f) => f.name === activeViewerName);
+  }, [activeViewerName, viewerEntries]);
 
   const selectionMode = selected.size > 0;
   const showFolders = folderTabs && tab === "folders" && !openFolder;
@@ -1015,28 +1030,27 @@ export function CategoryPage({ kind }: { kind: CategoryKind }) {
         }}
       />
 
-      <ConfirmDialog
+      <DeleteConfirmDialog
         open={dialog.kind === "confirmDelete"}
-        title={
-          dialog.kind === "confirmDelete" ? confirmCopy.moveToTrash(dialog.items.length).title : ""
-        }
-        description={
-          dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.items.length).description
-            : ""
-        }
-        confirmLabel={
-          dialog.kind === "confirmDelete"
-            ? confirmCopy.moveToTrash(dialog.items.length).confirmLabel
-            : ""
-        }
-        danger
-        onCancel={() => setDialog({ kind: "none" })}
-        onConfirm={async () => {
+        count={dialog.kind === "confirmDelete" ? dialog.items.length : 0}
+        onCancel={() => {
+          if (dialog.kind === "confirmDelete" && dialog.viewerName)
+            setDialog({ kind: "viewer", entryName: dialog.viewerName });
+          else setDialog({ kind: "none" });
+        }}
+        onConfirm={async (permanent) => {
           if (dialog.kind !== "confirmDelete") return;
-          const items = dialog.items;
+          const { items, viewerName } = dialog;
+          // Élément suivant du lecteur, calculé avant la disparition.
+          let nextName: string | null = null;
+          if (viewerName) {
+            const idx = viewerEntries.findIndex((f) => f.name === viewerName);
+            if (idx >= 0)
+              nextName = viewerEntries[idx + 1]?.name ?? viewerEntries[idx - 1]?.name ?? null;
+          }
           setDialog({ kind: "none" });
-          await doDelete(items);
+          const ok = await doDelete(items, permanent);
+          if (viewerName && ok && nextName) setDialog({ kind: "viewer", entryName: nextName });
         }}
       />
 
@@ -1047,7 +1061,7 @@ export function CategoryPage({ kind }: { kind: CategoryKind }) {
       />
 
       <UniversalViewer
-        open={dialog.kind === "viewer" && viewerIndex >= 0}
+        open={Boolean(activeViewerName) && viewerIndex >= 0}
         entries={viewerEntries}
         parent={
           viewerEntries[viewerIndex >= 0 ? viewerIndex : 0]

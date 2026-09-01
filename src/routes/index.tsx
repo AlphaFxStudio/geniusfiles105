@@ -304,7 +304,6 @@ export function FilesPage() {
   // Liste affichée, lisible depuis les effets déclarés plus haut.
   const sortedEntriesRef = useRef<FileEntry[]>([]);
 
-
   // Progress dialog state — dedicated so a long op can keep running while
   // the picker/confirm sheets close.
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
@@ -526,8 +525,6 @@ export function FilesPage() {
     }
   }, [pendingFocus, listing, path, t]);
 
-
-
   const currentTitle = path
     ? (path.segments[path.segments.length - 1] ??
       roots.find((r) => r.id === path.rootId)?.label ??
@@ -716,7 +713,6 @@ export function FilesPage() {
     return sortEntries(base, sortKey, sortOrder, foldersFirst);
   }, [listing, query, sortKey, sortOrder, foldersFirst]);
   sortedEntriesRef.current = sortedEntries;
-
 
   const selectedEntries = useMemo(() => selectionEntries(selection), [selection]);
 
@@ -1215,7 +1211,6 @@ export function FilesPage() {
           void startTransferFlow("move", [entry]);
           break;
         case "delete":
-          setDeleteForever(false);
           setDialog({ kind: "confirmDelete", entries: [entry], fromViewer: true });
           break;
         case "compress":
@@ -1392,7 +1387,6 @@ export function FilesPage() {
           if (fromViewer && ok) setViewerName(nextName);
         }}
       />
-
 
       <DetailsSheet
         open={dialog.kind === "details"}
